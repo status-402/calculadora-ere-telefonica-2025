@@ -1,11 +1,12 @@
-const customStrategy = {
+registerStrategy({
     name: 'custom',
+    label: 'Personalizado',
     defaults: {
         daysPerYear: 23
     },
     isDaysEditable: true,
     showBonus: true,
-    showCheques: true,
+    showBenefits: true,
     extras: [],
     isExtrasEditable: true
-};
+});

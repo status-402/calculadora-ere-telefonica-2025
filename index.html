@@ -34,8 +34,9 @@
         <div class="input-group">
             <label>Tipo de cálculo</label>
             <select x-model="mode" class="mode-select">
-                <option value="custom">Personalizado</option>
-                <option value="tid">Telefonica innovación Digital</option>
+                <template x-for="strategy in strategies" :key="strategy.name">
+                    <option :value="strategy.name" x-text="strategy.label"></option>
+                </template>
             </select>
         </div>
 
@@ -49,9 +50,9 @@
             <input type="number" x-model.number="bonus" placeholder="Ej: 5000" pattern="\d*" step="500">
         </div>
 
-        <div class="input-group" x-show="showCheques">
+        <div class="input-group" x-show="showBenefits">
             <label>Cheques / Beneficios Anual (€) <span class="optional-mark">(Opcional)</span></label>
-            <input type="number" x-model.number="cheques" placeholder="Ej: 1000" pattern="\d*" step="100">
+            <input type="number" x-model.number="benefits" placeholder="Ej: 1000" pattern="\d*" step="100">
         </div>
 
         <div class="input-group">
@@ -164,8 +165,10 @@
 
     </div>
 
+    <script src="scripts/registry.js"></script>
     <script src="scripts/custom.js"></script>
-    <script src="scripts/tid.js"></script>
+    <script src="scripts/example1.js"></script>
+    <script src="scripts/example2.js"></script>
     <script src="scripts/main.js"></script>
 
 </body>

@@ -2,17 +2,18 @@ function ereCalculator() {
     return {
         grossSalary: null,
         bonus: null,
-        cheques: null,
+        benefits: null,
         workedDays: null,
         daysPerYear: null,
         mode: 'custom',
         isDaysEditable: true,
         showBonus: false,
-        showCheques: false,
+        showBenefits: false,
         extras: [],
         isExtrasEditable: false,
         inputMethod: 'days', // 'days' or 'date'
         startDate: null,
+        strategies: window.ereStrategies || [],
 
         initApp() {
             // Notify Telegram that the Web App is ready
@@ -35,17 +36,17 @@ function ereCalculator() {
         },
 
         applyStrategy() {
-            let strategy;
-            if (this.mode === 'tid') {
-                strategy = tidStrategy;
-            } else {
-                strategy = customStrategy;
+            const strategy = this.strategies.find(s => s.name === this.mode) || this.strategies[0];
+
+            if (!strategy) {
+                console.error('Strategy not found:', this.mode);
+                return;
             }
 
             this.daysPerYear = strategy.defaults.daysPerYear;
             this.isDaysEditable = strategy.isDaysEditable;
             this.showBonus = strategy.showBonus;
-            this.showCheques = strategy.showCheques;
+            this.showBenefits = strategy.showBenefits;
 
             // Deep copy extras to avoid reference issues
             this.extras = JSON.parse(JSON.stringify(strategy.extras || []));
@@ -53,7 +54,7 @@ function ereCalculator() {
 
             // Reset hidden fields
             if (!this.showBonus) this.bonus = null;
-            if (!this.showCheques) this.cheques = null;
+            if (!this.showBenefits) this.benefits = null;
         },
 
         calculateDaysFromDate() {
@@ -81,7 +82,7 @@ function ereCalculator() {
         get totalAnnualSalary() {
             let total = (this.grossSalary || 0);
             if (this.showBonus) total += (this.bonus || 0);
-            if (this.showCheques) total += (this.cheques || 0);
+            if (this.showBenefits) total += (this.benefits || 0);
             return total;
         },
 
@@ -91,7 +92,7 @@ function ereCalculator() {
             const parts = [];
             if (this.grossSalary) parts.push(this.formatCurrency(this.grossSalary) + ' bruto');
             if (this.showBonus && this.bonus) parts.push(this.formatCurrency(this.bonus) + ' bonus');
-            if (this.showCheques && this.cheques) parts.push(this.formatCurrency(this.cheques) + ' cheques restaurantes');
+            if (this.showBenefits && this.benefits) parts.push(this.formatCurrency(this.benefits) + ' cheques restaurantes');
 
             if (parts.length === 0) return '';
             const total = parts.join(' + ');

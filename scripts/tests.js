@@ -52,30 +52,30 @@ const tests = {
                 assert(Math.abs(app.totalIndemnity - 2000) < 0.01, 'Base: Total Indemnity is 2000 (100 * 20 * 1)');
             })();
 
-            // 2. Bonus & Cheques (Custom)
+            // 2. Bonus & Benefits (Custom)
             (() => {
                 const app = createTestApp();
                 app.mode = 'custom';
                 app.applyStrategy();
                 app.grossSalary = 30000;
                 app.bonus = 5000;
-                app.cheques = 1500;
+                app.benefits = 1500;
 
-                assert(app.totalAnnualSalary === 36500, 'Custom: Total Annual includes Bonus and Cheques');
+                assert(app.totalAnnualSalary === 36500, 'Custom: Total Annual includes Bonus and Benefits');
             })();
 
-            // 3. TID Strategy (No Cheques)
+            // 3. TID Strategy (No Benefits)
             (() => {
                 const app = createTestApp();
                 app.mode = 'tid';
                 app.applyStrategy();
                 app.grossSalary = 30000;
                 app.bonus = 5000;
-                app.cheques = 1500; // Should be ignored/hidden logic
+                app.benefits = 1500; // Should be ignored/hidden logic
 
-                // Note: In TID mode, showCheques is false, so totalAnnualSalary logic excludes it
-                assert(app.showCheques === false, 'TID: Cheques hidden');
-                assert(app.totalAnnualSalary === 35000, 'TID: Total Annual excludes Cheques');
+                // Note: In TID mode, showBenefits is false, so totalAnnualSalary logic excludes it
+                assert(app.showBenefits === false, 'TID: Benefits hidden');
+                assert(app.totalAnnualSalary === 35000, 'TID: Total Annual excludes Benefits');
                 assert(app.daysPerYear === 43, 'TID: Days per year is 43');
                 assert(app.isDaysEditable === false, 'TID: Days per year not editable');
             })();
