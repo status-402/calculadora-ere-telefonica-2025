@@ -86,7 +86,7 @@
                 :class="{'readonly': !isDaysEditable}">
         </div>
 
-        <div class="input-group">
+        <div class="input-group" x-show="isExtrasEditable || extras.length > 0">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <label style="margin-bottom: 0;">Primas por Antigüedad <span class="optional-mark"
                         x-show="isExtrasEditable">(Opcional)</span></label>
@@ -125,10 +125,6 @@
                                 <strong x-text="formatCurrency(extra.amount)"></strong>
                             </div>
                         </template>
-                        <div x-show="extras.length === 0"
-                            style="font-size: 0.85rem; color: var(--tg-theme-hint-color); font-style: italic;">
-                            No hay primas definidas
-                        </div>
                     </div>
                 </template>
             </div>
