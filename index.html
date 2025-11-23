@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Calculadora ERE</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+    <div class="container" x-data="ereCalculator()" x-init="initApp()">
+
+        <div class="warning">
+            ⚠️ <strong>Datos aproximados.</strong> Sin validez legal.
+        </div>
+
+        <div class="header-row">
+            <h2>Calculadora ERE</h2>
+            <!-- GitHub link removed for anonymity -->
+            <span class="github-link" style="cursor: default; opacity: 0.5;" aria-label="Código fuente">
+                <svg class="github-icon" viewBox="0 0 98 96" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                        d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z" />
+                </svg>
+            </span>
+        </div>
+
+        <div class="input-group">
+            <label>Tipo de cálculo</label>
+            <select x-model="mode" class="mode-select">
+                <option value="custom">Personalizado</option>
+                <option value="tid">Telefonica innovación Digital</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Salario Bruto Anual (€) <span class="required-mark">*</span></label>
+            <input type="number" x-model.number="grossSalary" placeholder="Ej: 25000" pattern="\d*" step="1000">
+        </div>
+
+        <div class="input-group" x-show="showBonus">
+            <label>Bonus Anual (€) <span class="optional-mark">(Opcional)</span></label>
+            <input type="number" x-model.number="bonus" placeholder="Ej: 5000" pattern="\d*" step="500">
+        </div>
+
+        <div class="input-group" x-show="showCheques">
+            <label>Cheques / Beneficios Anual (€) <span class="optional-mark">(Opcional)</span></label>
+            <input type="number" x-model.number="cheques" placeholder="Ej: 1000" pattern="\d*" step="100">
+        </div>
+
+        <div class="input-group">
+            <label>Antigüedad <span class="required-mark">*</span></label>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" x-model="inputMethod" value="days" class="radio-input"> Días
+                </label>
+                <label class="radio-label">
+                    <input type="radio" x-model="inputMethod" value="date" class="radio-input"> Fecha Inicio
+                </label>
+            </div>
+
+            <template x-if="inputMethod === 'days'">
+                <input type="number" x-model.number="workedDays" placeholder="Ej: 1000" pattern="\d*">
+            </template>
+
+            <template x-if="inputMethod === 'date'">
+                <div>
+                    <input type="date" x-model="startDate" class="date-input" :max="maxDate">
+                    <div class="days-count" x-show="workedDays > 0">
+                        Total: <span x-text="workedDays"></span> días
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <div class="input-group">
+            <label>Días indemnización / año <span class="required-mark" x-show="isDaysEditable">*</span></label>
+            <input type="number" x-model.number="daysPerYear" pattern="\d*" :readonly="!isDaysEditable"
+                :class="{'readonly': !isDaysEditable}">
+        </div>
+
+        <div class="input-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label style="margin-bottom: 0;">Primas por Antigüedad <span class="optional-mark"
+                        x-show="isExtrasEditable">(Opcional)</span></label>
+                <button x-show="isExtrasEditable" @click="addExtra()" class="btn-icon-add"
+                    title="Añadir prima">+</button>
+            </div>
+
+            <div class="extras-list">
+                <!-- Editable Mode -->
+                <template x-if="isExtrasEditable">
+                    <div>
+                        <template x-for="(extra, index) in extras" :key="index">
+                            <div class="extra-item">
+                                <div class="extra-field">
+                                    <span class="extra-label-small">Años mín.</span>
+                                    <input type="number" x-model.number="extra.years" placeholder="Ej: 5"
+                                        class="extra-input">
+                                </div>
+                                <div class="extra-field">
+                                    <span class="extra-label-small">Importe (€)</span>
+                                    <input type="number" x-model.number="extra.amount" placeholder="Ej: 10000"
+                                        class="extra-input" step="1000">
+                                </div>
+                                <button @click="removeExtra(index)" class="btn-delete" title="Eliminar">×</button>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Read-only Mode -->
+                <template x-if="!isExtrasEditable">
+                    <div>
+                        <template x-for="extra in extras">
+                            <div class="extra-readonly">
+                                <span>> <span x-text="extra.years"></span> años</span>
+                                <strong x-text="formatCurrency(extra.amount)"></strong>
+                            </div>
+                        </template>
+                        <div x-show="extras.length === 0"
+                            style="font-size: 0.85rem; color: var(--tg-theme-hint-color); font-style: italic;">
+                            No hay primas definidas
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <div x-show="grossSalary > 0 && workedDays > 0" x-transition>
+            <hr class="divider">
+
+            <div class="breakdown">
+                <span>Salario Diario:</span>
+                <div style="text-align: right;">
+                    <strong x-text="formatCurrency(dailySalary)"></strong>
+                    <div style="font-size: 0.75rem; opacity: 0.7;" x-text="dailySalaryExplanation"></div>
+                </div>
+            </div>
+            <div class="breakdown">
+                <span>Antigüedad:</span>
+                <strong x-text="workedYears.toFixed(2) + ' años'"></strong>
+            </div>
+
+            <div class="result-box">
+                <span>TOTAL ESTIMADO</span>
+                <div class="total" x-text="formatCurrency(totalIndemnity)"></div>
+                <div x-show="exceedsCap" class="error-message">
+                    ⚠️ Supera el tope de 1 año de salario
+                </div>
+
+                <div class="calculation-explanation">
+                    <strong>Cálculo:</strong><br>
+                    <span x-text="calculationExplanation"></span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="scripts/custom.js"></script>
+    <script src="scripts/tid.js"></script>
+    <script src="scripts/main.js"></script>
+
+</body>
+
+</html>

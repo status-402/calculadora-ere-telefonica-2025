@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests Calculadora ERE</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #f4f4f9;
+        }
+
+        .test-suite {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .pass {
+            color: green;
+        }
+
+        .fail {
+            color: red;
+            font-weight: bold;
+        }
+
+        .summary {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="test-suite">
+        <h1>Resultados de los Tests</h1>
+        <div id="results">Ejecutando...</div>
+    </div>
+
+    <!-- App Scripts -->
+    <script src="scripts/custom.js"></script>
+    <script src="scripts/tid.js"></script>
+    <script src="scripts/main.js"></script>
+
+    <!-- Test Script -->
+    <script src="scripts/tests.js"></script>
+</body>
+
+</html>
