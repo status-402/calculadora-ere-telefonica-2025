@@ -2,11 +2,11 @@ registerStrategy({
     name: 'example2',
     label: 'Example 2',
     defaults: {
-        daysPerYear: 43
+        daysPerYear: 43,
+        extras: []
     },
     isDaysEditable: false,
     showBonus: true,
     showBenefits: false,
-    extras: [],
     isExtrasEditable: false
 });
