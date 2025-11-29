@@ -51,32 +51,42 @@
         </div>
 
         <div class="input-group" x-show="showBenefits">
-            <label>Cheques / Beneficios Anual (€) <span class="optional-mark">(Opcional)</span></label>
-            <input type="number" x-model.number="benefits" placeholder="Ej: 1000" pattern="\d*" step="100">
+            <label>Cheques / Beneficios Anual (€) <span class="optional-mark"
+                    x-show="isBenefitsEditable">(Opcional)</span></label>
+            <input type="number" x-model.number="benefits" placeholder="Ej: 1000" pattern="\d*" step="100"
+                :readonly="!isBenefitsEditable" :class="{'readonly': !isBenefitsEditable}">
         </div>
 
         <div class="input-group">
             <label>Antigüedad <span class="required-mark">*</span></label>
             <div class="radio-group">
                 <label class="radio-label">
-                    <input type="radio" x-model="inputMethod" value="days" class="radio-input"> Días
-                </label>
-                <label class="radio-label">
                     <input type="radio" x-model="inputMethod" value="date" class="radio-input"> Fecha Inicio
                 </label>
+                <label class="radio-label">
+                    <input type="radio" x-model="inputMethod" value="days" class="radio-input"> Días
+                </label>
             </div>
-
-            <template x-if="inputMethod === 'days'">
-                <input type="number" x-model.number="workedDays" placeholder="Ej: 1000" pattern="\d*">
-            </template>
-
             <template x-if="inputMethod === 'date'">
                 <div>
-                    <input type="date" x-model="startDate" class="date-input" :max="maxDate">
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.8rem; margin-bottom: 2px;">Inicio</label>
+                            <input type="date" x-model="startDate" class="date-input" :max="maxDate">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.8rem; margin-bottom: 2px;">Fin</label>
+                            <input type="date" x-model="endDate" class="date-input" :readonly="!isEndDateEditable"
+                                :class="{'readonly': !isEndDateEditable}">
+                        </div>
+                    </div>
                     <div class="days-count" x-show="workedDays > 0">
                         Total: <span x-text="workedDays"></span> días
                     </div>
                 </div>
+            </template>
+            <template x-if="inputMethod === 'days'">
+                <input type="number" x-model.number="workedDays" placeholder="Ej: 1000" pattern="\d*">
             </template>
         </div>
 

@@ -64,36 +64,36 @@ const tests = {
                 assert(app.totalAnnualSalary === 36500, 'Custom: Total Annual includes Bonus and Benefits');
             })();
 
-            // 3. TID Strategy (No Benefits)
+            // 3. Example 1 Strategy (No Benefits)
             (() => {
                 const app = createTestApp();
-                app.mode = 'tid';
+                app.mode = 'example1';
                 app.applyStrategy();
                 app.grossSalary = 30000;
                 app.bonus = 5000;
                 app.benefits = 1500; // Should be ignored/hidden logic
 
-                // Note: In TID mode, showBenefits is false, so totalAnnualSalary logic excludes it
-                assert(app.showBenefits === false, 'TID: Benefits hidden');
-                assert(app.totalAnnualSalary === 35000, 'TID: Total Annual excludes Benefits');
-                assert(app.daysPerYear === 43, 'TID: Days per year is 43');
-                assert(app.isDaysEditable === false, 'TID: Days per year not editable');
+                // Note: In Example 1 mode, showBenefits is false, so totalAnnualSalary logic excludes it
+                assert(app.showBenefits === false, 'Example 1: Benefits hidden');
+                assert(app.totalAnnualSalary === 35000, 'Example 1: Total Annual excludes Benefits');
+                assert(app.daysPerYear === 50, 'Example 1: Days per year is 50');
+                assert(app.isDaysEditable === false, 'Example 1: Days per year not editable');
             })();
 
-            // 4. Seniority Extras (TID)
+            // 4. Seniority Extras (Example 1)
             (() => {
                 const app = createTestApp();
-                app.mode = 'tid';
+                app.mode = 'example1';
                 app.applyStrategy();
                 app.grossSalary = 36500; // Daily 100
                 app.workedDays = 365 * 6; // 6 years
 
-                // Base: 100 * 43 * 6 = 25800
-                // Extra for > 5 years: 10000
-                // Total: 35800
+                // Base: 100 * 50 * 6 = 30000
+                // Extra for > 5 years: 15000
+                // Total: 45000
 
-                assert(app.applicableExtra.amount === 10000, 'Extras: Correct tier found (5 years)');
-                assert(Math.abs(app.totalIndemnity - 35800) < 0.1, 'Extras: Total includes extra amount');
+                assert(app.applicableExtra.amount === 15000, 'Extras: Correct tier found (5 years)');
+                assert(Math.abs(app.totalIndemnity - 45000) < 0.1, 'Extras: Total includes extra amount');
             })();
 
             // 5. Date Calculation
@@ -107,6 +107,14 @@ const tests = {
                 const month = String(yesterday.getMonth() + 1).padStart(2, '0');
                 const day = String(yesterday.getDate()).padStart(2, '0');
                 app.startDate = `${year}-${month}-${day}`;
+
+                // Set end date to today (which is default, but explicit for test clarity)
+                const today = new Date();
+                const tYear = today.getFullYear();
+                const tMonth = String(today.getMonth() + 1).padStart(2, '0');
+                const tDay = String(today.getDate()).padStart(2, '0');
+                app.endDate = `${tYear}-${tMonth}-${tDay}`;
+
                 app.calculateDaysFromDate();
 
                 assert(app.workedDays === 1, 'Date: Calculates 1 day for yesterday');

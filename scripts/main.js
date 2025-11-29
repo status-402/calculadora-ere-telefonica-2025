@@ -9,10 +9,13 @@ function ereCalculator() {
         isDaysEditable: true,
         showBonus: false,
         showBenefits: false,
+        isBenefitsEditable: true,
         extras: [],
         isExtrasEditable: false,
-        inputMethod: 'days', // 'days' or 'date'
+        isEndDateEditable: true,
+        inputMethod: 'date', // 'days' or 'date'
         startDate: null,
+        endDate: null,
         strategies: window.ereStrategies || [],
 
         initApp() {
@@ -22,6 +25,9 @@ function ereCalculator() {
                 window.Telegram.WebApp.expand(); // Expand to full screen
             }
 
+            // Set default end date to today
+            this.endDate = new Date().toISOString().split('T')[0];
+
             // Apply initial strategy
             this.applyStrategy();
 
@@ -30,6 +36,7 @@ function ereCalculator() {
 
             // Watch for date changes
             this.$watch('startDate', () => this.calculateDaysFromDate());
+            this.$watch('endDate', () => this.calculateDaysFromDate());
             this.$watch('inputMethod', () => {
                 if (this.inputMethod === 'date') this.calculateDaysFromDate();
             });
@@ -47,23 +54,42 @@ function ereCalculator() {
             this.isDaysEditable = strategy.isDaysEditable;
             this.showBonus = strategy.showBonus;
             this.showBenefits = strategy.showBenefits;
+            this.isBenefitsEditable = strategy.hasOwnProperty('isBenefitsEditable') ? strategy.isBenefitsEditable : true;
 
             // Deep copy extras to avoid reference issues
-            this.extras = JSON.parse(JSON.stringify(strategy.extras || []));
+            this.extras = JSON.parse(JSON.stringify(strategy.defaults?.extras || []));
             this.isExtrasEditable = strategy.isExtrasEditable;
 
             // Reset hidden fields
             if (!this.showBonus) this.bonus = null;
-            if (!this.showBenefits) this.benefits = null;
+            if (!this.showBenefits) {
+                this.benefits = null;
+            } else if (strategy.defaults && strategy.defaults.benefits) {
+                this.benefits = strategy.defaults.benefits;
+            }
+
+            // Set end date from strategy default or today
+            if (strategy.defaults && strategy.defaults.endDate) {
+                this.endDate = strategy.defaults.endDate;
+            } else {
+                this.endDate = new Date().toISOString().split('T')[0];
+            }
+
+            this.isEndDateEditable = strategy.hasOwnProperty('isEndDateEditable') ? strategy.isEndDateEditable : true;
         },
 
         calculateDaysFromDate() {
-            if (this.inputMethod === 'date' && this.startDate) {
+            if (this.inputMethod === 'date' && this.startDate && this.endDate) {
                 const start = new Date(this.startDate);
                 start.setHours(0, 0, 0, 0);
 
-                const end = new Date();
+                const end = new Date(this.endDate);
                 end.setHours(0, 0, 0, 0);
+
+                if (end < start) {
+                    this.workedDays = 0;
+                    return;
+                }
 
                 const diffTime = Math.abs(end - start);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
