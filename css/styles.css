@@ -72,6 +72,11 @@ input:focus {
     cursor: not-allowed;
 }
 
+/* Invalid input style */
+.invalid {
+    border-color: #d32f2f !important;
+}
+
 .result-box {
     margin-top: 20px;
     padding: 15px;
@@ -361,4 +366,28 @@ input:focus {
         right: 15px;
         margin-left: 0;
     }
+}
+
+/* Result Box Extensions */
+.result-subsection {
+    margin-top: 15px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-top: 10px;
+}
+
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.text-highlight {
+    color: var(--tg-theme-button-color, #2e7d32);
+}
+
+.explanation-detail {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 5px;
+    text-align: left;
 }

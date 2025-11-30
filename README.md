@@ -24,6 +24,12 @@ Una herramienta web sencilla y eficaz para calcular estimaciones de indemnizaci�
   - Salario diario calculado a partir del salario bruto + bonus + beneficios.
   - Días de indemnización por mes (conversión automática de días/año).
   - Explicación completa del cálculo final.
+- **Cálculo de Indemnización Exenta de Impuestos**:
+  - Calcula automáticamente la indemnización exenta según la normativa de despido improcedente.
+  - Divide el periodo en dos: hasta 11/02/2012 (×3.75) y desde 12/02/2012 (×2.75).
+  - Aplica el límite legal de 180.000€.
+  - Muestra el desglose detallado del cálculo por periodos.
+- **Validación de Fechas**: Indicación visual cuando la fecha de fin es anterior a la fecha de inicio.
 - **Privacidad Total**: Todo el cálculo se realiza en el navegador del cliente. Ningún dato es enviado a servidores externos.
 
 ## Metodología de Cálculo
@@ -45,6 +51,31 @@ El sistema cuenta los meses entre las fechas de la siguiente manera:
 **Ejemplo**: 
 - Inicio: 15/01/2023, Fin: 20/03/2023 → 2 meses + 1 = **3 meses**
 - Inicio: 20/01/2023, Fin: 15/03/2023 → 2 meses = **2 meses**
+
+### Cálculo de Indemnización Exenta de Impuestos
+
+La calculadora determina la cantidad máxima exenta de tributación según la normativa de despido improcedente:
+
+1. **División del Periodo**: Se divide el periodo laboral en dos tramos:
+   - **Periodo 1** (hasta 11/02/2012): Meses × 3.75 días/mes = Días totales periodo 1
+   - **Periodo 2** (desde 12/02/2012): Meses × 2.75 días/mes = Días totales periodo 2
+2. **Aplicación de Límites por Periodo**:
+   - **Periodo 1**: Limitado a 42 meses × 30 días = 1.260 días máximo
+   - **Periodo 2**: El total acumulado (Periodo 1 + Periodo 2) no puede exceder 24 meses × 30 días = 720 días
+3. **Cálculo del Importe**: 
+   - Importe Periodo 1 = Días limitados Periodo 1 × Salario Diario
+   - Importe Periodo 2 = Días limitados Periodo 2 × Salario Diario
+4. **Aplicación del Límite Total**: Se aplica un tope máximo de **180.000€**
+
+**Ejemplo**:
+- Fecha inicio: 01/01/2010, Fecha fin: 01/01/2015 (25 meses periodo 1, 35 meses periodo 2)
+- Salario diario: 100€
+- Periodo 1: 25 meses × 3.75 días/mes = 93.75 días → 93.75 días × 100€ = 9.375€
+- Periodo 2: 35 meses × 2.75 días/mes = 96.25 días
+  - Total acumulado: 93.75 + 96.25 = 190 días
+  - Límite periodo 2: 720 días (total) – 93.75 días (periodo 1) = 626.25 días disponibles
+  - Como 96.25 < 626.25, se usan los 96.25 días → 96.25 × 100€ = 9.625€
+- Total exento: 9.375€ + 9.625€ = 19.000€ (bajo el límite de 180.000€)
 
 ## Fuentes de Referencia Legal
 

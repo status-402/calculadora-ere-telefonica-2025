@@ -68,12 +68,12 @@
                 <div style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label style="font-size: 0.8rem; margin-bottom: 2px;">Inicio</label>
-                        <input type="date" x-model="startDate" class="date-input">
+                        <input type="date" x-model="startDate" class="date-input" :class="{'invalid': isDateInvalid}">
                     </div>
                     <div style="flex: 1;">
                         <label style="font-size: 0.8rem; margin-bottom: 2px;">Fin</label>
                         <input type="date" x-model="endDate" class="date-input" :readonly="!isEndDateEditable"
-                            :class="{'readonly': !isEndDateEditable}">
+                            :class="{'readonly': !isEndDateEditable, 'invalid': isDateInvalid}">
                     </div>
                 </div>
                 <div class="days-count" x-show="workedMonths > 0">
@@ -147,8 +147,7 @@
         </div>
 
 
-        <!-- TODO Añadir el día por año, que sin eso tampoco vale -->
-        <div x-show="grossSalary > 0 && workedMonths > 0" x-transition>
+        <div x-show="grossSalary > 0 && workedMonths > 0 && daysPerYear > 0" x-transition>
             <hr class="divider">
 
             <div class="breakdown">
@@ -181,6 +180,20 @@
                 <div class="calculation-explanation">
                     <strong>Cálculo:</strong><br>
                     <span x-text="calculationExplanation"></span>
+                </div>
+
+                <div class="result-subsection">
+                    <div class="result-row">
+                        <span>Exento de tributar hasta:</span>
+                        <strong x-text="formatCurrency(taxExemptIndemnity)" class="text-highlight"></strong>
+                    </div>
+                    <div class="explanation-detail" x-html="taxExemptExplanation"></div>
+                </div>
+
+                <div class="result-subsection">
+                    <div style="font-size: 0.85rem; opacity: 0.9;">
+                        ℹ️ Tienes derecho a recibir la prestación por desempleo.
+                    </div>
                 </div>
 
                 <div x-show="installmentPayments.length > 0"

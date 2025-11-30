@@ -38,8 +38,12 @@ function ereCalculator() {
             this.$watch('mode', () => this.applyStrategy());
 
             // Watch for date changes
-            this.$watch('startDate', () => this.calculateMonthsFromDate());
-            this.$watch('endDate', () => this.calculateMonthsFromDate());
+            this.$watch('startDate', () => {
+                this.workedMonths = this.calculateMonthsFromDate(this.startDate, this.endDate);
+            });
+            this.$watch('endDate', () => {
+                this.workedMonths = this.calculateMonthsFromDate(this.startDate, this.endDate);
+            });
 
             this.$watch('daysPerYear', (newValue) => {
                 if (newValue !== null) {
@@ -50,7 +54,6 @@ function ereCalculator() {
 
         applyStrategy() {
             const strategy = this.strategies.find(s => s.name === this.mode) || this.strategies[0];
-            console.log(strategy);
             if (!strategy) {
                 console.error('Strategy not found:', this.mode);
                 return;
@@ -98,25 +101,24 @@ function ereCalculator() {
             }
         },
 
-        calculateMonthsFromDate() {
-            if (this.startDate && this.endDate) {
-                const start = new Date(this.startDate);
-                const end = new Date(this.endDate);
+        calculateMonthsFromDate(startDate, endDate) {
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
 
                 if (end < start) {
-                    this.workedMonths = 0;
-                    return;
+                    return 0;
                 }
 
-                this.workedMonths = (end.getFullYear() - start.getFullYear()) * 12;
-                this.workedMonths += end.getMonth() - start.getMonth();
+                let months = (end.getFullYear() - start.getFullYear()) * 12;
+                months += end.getMonth() - start.getMonth();
 
-                // If start day <= end day, add 1 month
                 if (start.getDate() <= end.getDate()) {
-                    this.workedMonths += 1;
+                    months += 1;
                 }
-                return
+                return months;
             }
+            return 0;
         },
 
         addExtra() {
@@ -181,6 +183,13 @@ function ereCalculator() {
             }
         },
 
+        get isDateInvalid() {
+            if (!this.startDate || !this.endDate) return false;
+            const start = new Date(this.startDate);
+            const end = new Date(this.endDate);
+            return end < start;
+        },
+
         get calculationExplanation() {
             if (!this.grossSalary || !this.workedMonths || !this.daysPerYear) return '';
             let explanation = '';
@@ -195,6 +204,111 @@ function ereCalculator() {
             }
 
             return explanation;
+        },
+
+        get taxExemptIndemnity() {
+            if (!this.startDate || !this.endDate || !this.dailySalary) return 0;
+
+            const splitDate1 = new Date('2012-02-11');
+            const splitDate2 = new Date('2012-02-12');
+            const daysPerMonthPeriod1 = 3.75;
+            const daysPerMonthPeriod2 = 2.75;
+            const maxMonthsPeriod1 = 42;
+            const maxMonthsPeriod2 = 24;
+            const start = new Date(this.startDate);
+            const end = new Date(this.endDate);
+
+            let months1 = 0;
+            let months2 = 0;
+
+            if (start <= splitDate1) {
+                const end1 = end < splitDate1 ? end : splitDate1;
+                months1 = this.calculateMonthsFromDate(start, end1);
+            }
+
+            if (end >= splitDate2) {
+                const start2 = start > splitDate2 ? start : splitDate2;
+                months2 = this.calculateMonthsFromDate(start2, end);
+            }
+
+            const daysPeriod1 = months1 * daysPerMonthPeriod1;
+            const daysPeriod2 = months2 * daysPerMonthPeriod2;
+            const limitedDays1 = Math.min(daysPeriod1, maxMonthsPeriod1 * 30);
+            const limitedDays2 = Math.max(Math.min(daysPeriod1 + daysPeriod2, maxMonthsPeriod2 * 30) - daysPeriod1, 0);
+
+            const amount1 = limitedDays1 * this.dailySalary;
+            const amount2 = limitedDays2 * this.dailySalary;
+
+            const total = amount1 + amount2;
+            return Math.min(total, 180000);
+        },
+
+        get taxExemptExplanation() {
+            if (!this.startDate || !this.endDate || !this.dailySalary) return '';
+
+            const splitDate1 = new Date('2012-02-11');
+            const splitDate2 = new Date('2012-02-12');
+            const daysPerMonthPeriod1 = 3.75;
+            const daysPerMonthPeriod2 = 2.75;
+            const maxMonthsPeriod1 = 42;
+            const maxMonthsPeriod2 = 24;
+            const start = new Date(this.startDate);
+            const end = new Date(this.endDate);
+
+            let months1 = 0;
+            let months2 = 0;
+            let explanation = [];
+            let limitedDays1 = 0;
+            let limitedDays2 = 0;
+
+            if (start <= splitDate1) {
+                const end1 = end < splitDate1 ? end : splitDate1;
+                months1 = this.calculateMonthsFromDate(start, end1);
+                if (months1 > 0) {
+                    const daysPeriod1 = months1 * daysPerMonthPeriod1;
+                    limitedDays1 = daysPeriod1;
+                    let text_explanation = '• Hasta 11/02/2012:';
+                    if (daysPeriod1 > maxMonthsPeriod1 * 30) {
+                        limitedDays1 = maxMonthsPeriod1 * 30;
+                        text_explanation += ` ${limitedDays1} (máximo de meses en días) × ${this.formatCurrency(this.dailySalary)} (diario) = ${this.formatCurrency(limitedDays1 * this.dailySalary)}`;
+                        text_explanation += ` (limitado a ${maxMonthsPeriod1} meses)`;
+                    }
+                    else {
+                        text_explanation += ` ${months1} (meses) × ${daysPerMonthPeriod1} (días/mes) × ${this.formatCurrency(this.dailySalary)} (diario) = ${this.formatCurrency(months1 * daysPerMonthPeriod1 * this.dailySalary)}`;
+                    }
+                    explanation.push(text_explanation);
+                }
+            }
+
+            if (end >= splitDate2) {
+                const start2 = start > splitDate2 ? start : splitDate2;
+                months2 = this.calculateMonthsFromDate(start2, end);
+                if (months2 > 0) {
+                    const daysPeriod2 = months2 * daysPerMonthPeriod2;
+                    limitedDays2 = Math.max(Math.min(limitedDays1 + daysPeriod2, maxMonthsPeriod2 * 30) - limitedDays1, 0);
+
+                    let text_explanation = '• Desde 12/02/2012:';
+                    if (limitedDays2 < daysPeriod2) {
+                        text_explanation += ` ${limitedDays2.toFixed(2)} (días limitados) × ${this.formatCurrency(this.dailySalary)} (diario) = ${this.formatCurrency(limitedDays2 * this.dailySalary)}`;
+                        text_explanation += ` (limitado por el máximo total de ${maxMonthsPeriod2} meses)`;
+                    } else {
+                        text_explanation += ` ${months2} (meses) × ${daysPerMonthPeriod2} (días/mes) × ${this.formatCurrency(this.dailySalary)} (diario) = ${this.formatCurrency(months2 * daysPerMonthPeriod2 * this.dailySalary)}`;
+                    }
+                    explanation.push(text_explanation);
+                }
+            }
+
+            const amount1 = limitedDays1 * this.dailySalary;
+            const amount2 = limitedDays2 * this.dailySalary;
+            const total = amount1 + amount2;
+
+            if (explanation.length > 0) {
+                if (total > 180000) {
+                    explanation.push(`• Límite legal aplicado: 180.000,00 €`);
+                }
+            }
+
+            return explanation.join('<br>');
         },
 
         get installmentPayments() {

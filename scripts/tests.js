@@ -92,7 +92,7 @@ const tests = {
                 const app = createTestApp();
                 app.startDate = '2023-01-15';
                 app.endDate = '2023-03-15';
-                app.calculateMonthsFromDate();
+                app.workedMonths = app.calculateMonthsFromDate(app.startDate, app.endDate);
 
                 // Jan to Mar = 2 months, day 15 <= 15, so +1 month = 3 months
                 assert(app.workedMonths === 3, 'Months: Same day adds 1 month (15 to 15 = 3 months)');
@@ -103,7 +103,7 @@ const tests = {
                 const app = createTestApp();
                 app.startDate = '2023-01-10';
                 app.endDate = '2023-03-20';
-                app.calculateMonthsFromDate();
+                app.workedMonths = app.calculateMonthsFromDate(app.startDate, app.endDate);
 
                 // Jan to Mar = 2 months, day 10 <= 20, so +1 month = 3 months
                 assert(app.workedMonths === 3, 'Months: Start day < end day adds 1 month (10 to 20 = 3 months)');
@@ -114,7 +114,7 @@ const tests = {
                 const app = createTestApp();
                 app.startDate = '2023-01-20';
                 app.endDate = '2023-03-10';
-                app.calculateMonthsFromDate();
+                app.workedMonths = app.calculateMonthsFromDate(app.startDate, app.endDate);
 
                 // Jan to Mar = 2 months, day 20 > 10, so no +1 = 2 months
                 assert(app.workedMonths === 2, 'Months: Start day > end day no addition (20 to 10 = 2 months)');
@@ -125,7 +125,7 @@ const tests = {
                 const app = createTestApp();
                 app.startDate = '2020-01-01';
                 app.endDate = '2023-01-01';
-                app.calculateMonthsFromDate();
+                app.workedMonths = app.calculateMonthsFromDate(app.startDate, app.endDate);
 
                 // 3 years * 12 = 36 months, day 1 <= 1, so +1 = 37 months
                 assert(app.workedMonths === 37, 'Months: 3 years from Jan 1 to Jan 1 = 37 months');
@@ -136,7 +136,7 @@ const tests = {
                 const app = createTestApp();
                 app.startDate = '2023-01-10';
                 app.endDate = '2023-01-20';
-                app.calculateMonthsFromDate();
+                app.workedMonths = app.calculateMonthsFromDate(app.startDate, app.endDate);
 
                 assert(app.workedMonths === 1, 'Months: Same month with day <= = 1 month');
             })();
@@ -182,7 +182,7 @@ const tests = {
                 const app = createTestApp();
                 app.startDate = '2023-03-20';
                 app.endDate = '2023-01-10';
-                app.calculateMonthsFromDate();
+                app.workedMonths = app.calculateMonthsFromDate(app.startDate, app.endDate);
 
                 assert(app.workedMonths === 0, 'Months: End before start = 0 months');
             })();
@@ -238,6 +238,153 @@ const tests = {
                 assert(Math.abs(installments[0].amount - 15000) < 1, 'Installments: Correct split amount (30000 / 2 = 15000)');
                 assert(installments[1].date === '2026-06-01', 'Installments: Correct second date');
                 assert(Math.abs(installments[1].amount - 15000) < 1, 'Installments: Correct split amount (30000 / 2 = 15000)');
+            })();
+
+            // 16. Tax-Exempt Indemnity - All Pre-2012
+            (() => {
+                const app = createTestApp();
+                app.initApp();
+                app.grossSalary = 36500; // 100/day
+                app.startDate = '2010-01-01';
+                app.endDate = '2011-01-01'; // 13 months
+                app.workedMonths = app.calculateMonthsFromDate(app.startDate, app.endDate);
+                app.daysPerYear = 33;
+                app.daysPerMonth = 33 / 12;
+
+                // Period 1: 13 months * 3.75 days/month = 48.75 days, 48.75 * 100 = 4875
+                const days1 = 13 * 3.75;
+                const expected = days1 * 100;
+                assert(Math.abs(app.taxExemptIndemnity - expected) < 1, 'Tax-Exempt: Pre-2012 calculation (13 months × 3.75 days/month)');
+            })();
+
+
+            // 17. Tax-Exempt Indemnity - All Post-2012
+            (() => {
+                const app = createTestApp();
+                app.initApp();
+                app.grossSalary = 36500; // 100/day
+                app.startDate = '2013-01-01';
+                app.endDate = '2014-01-01'; // 13 months
+                app.workedMonths = app.calculateMonthsFromDate(app.startDate, app.endDate);
+                app.daysPerYear = 33;
+                app.daysPerMonth = 33 / 12;
+
+                // Period 2: 13 months * 2.75 days/month = 35.75 days, 35.75 * 100 = 3575
+                const days2 = 13 * 2.75;
+                const expected = days2 * 100;
+                assert(Math.abs(app.taxExemptIndemnity - expected) < 1, 'Tax-Exempt: Post-2012 calculation (13 months × 2.75 days/month)');
+            })();
+
+
+            // 18. Tax-Exempt Indemnity - Split Period
+            (() => {
+                const app = createTestApp();
+                app.initApp();
+                app.grossSalary = 36500; // 100/day
+                app.startDate = '2011-02-12';
+                app.endDate = '2013-02-11'; // 24 months (12 pre + 12 post)
+                app.workedMonths = app.calculateMonthsFromDate(app.startDate, app.endDate);
+                app.daysPerYear = 33;
+                app.daysPerMonth = 33 / 12;
+
+                // Period 1: 12 months * 3.75 days/month = 45 days, 45 * 100 = 4500
+                // Period 2: 12 months * 2.75 days/month = 33 days, 33 * 100 = 3300
+                // Total: 7800
+                const days1 = 12 * 3.75;
+                const days2 = 12 * 2.75;
+                const expected = (days1 * 100) + (days2 * 100);
+                assert(Math.abs(app.taxExemptIndemnity - expected) < 1, 'Tax-Exempt: Split period calculation');
+            })();
+
+
+            // 19. Tax-Exempt Indemnity - Cap at 180,000 and period limits
+            (() => {
+                const app = createTestApp();
+                app.initApp();
+                app.grossSalary = 365000; // 1000/day
+                app.startDate = '2000-01-01';
+                app.endDate = '2020-01-01'; // 241 months total
+                app.workedMonths = app.calculateMonthsFromDate(app.startDate, app.endDate);
+                app.daysPerYear = 33;
+                app.daysPerMonth = 33 / 12;
+
+                // Period 1: 145 months * 3.75 = 543.75 days, limited to 42*30 = 1260 days
+                // Period 2: 96 months *2.75 = 264 days
+                // daysPeriod1 + daysPeriod2 = 543.75 + 264 = 807.75
+                // limitedDays2 = Math.max(Math.min(807.75, 720) - 543.75, 0) = Math.max(720 - 543.75, 0) = 176.25
+                // amount1 = 543.75 * 1000 = 543,750 (limited to 1260 days would give 1,260,000 so uses 543.75)
+                // amount2 = 176.25 * 1000 = 176,250
+                // Total = 720,000, capped at 180,000
+                assert(app.taxExemptIndemnity === 180000, 'Tax-Exempt: Capped at 180,000€ (with period limits)');
+            })();
+
+
+            // 20. Date Validation - Valid dates
+            (() => {
+                const app = createTestApp();
+                app.initApp();
+                app.startDate = '2023-01-01';
+                app.endDate = '2023-12-31';
+
+                assert(app.isDateInvalid === false, 'Date Validation: Valid date range');
+            })();
+
+            // 21. Date Validation - Invalid dates (end before start)
+            (() => {
+                const app = createTestApp();
+                app.initApp();
+                app.startDate = '2023-12-31';
+                app.endDate = '2023-01-01';
+
+                assert(app.isDateInvalid === true, 'Date Validation: Invalid date range (end before start)');
+            })();
+
+            // 22. Date Validation - Missing dates
+            (() => {
+                const app = createTestApp();
+                app.initApp();
+                app.startDate = null;
+                app.endDate = '2023-12-31';
+
+                assert(app.isDateInvalid === false, 'Date Validation: Returns false when start date is missing');
+            })();
+
+            // 23. Tax-Exempt - Period 1 limit (42 months * 30 days = 1260 days)
+            (() => {
+                const app = createTestApp();
+                app.initApp();
+                app.grossSalary = 36500; // 100/day
+                app.startDate = '2000-01-01';
+                app.endDate = '2012-02-11'; // 146 months
+                app.workedMonths = app.calculateMonthsFromDate(app.startDate, app.endDate);
+                app.daysPerYear = 33;
+                app.daysPerMonth = 33 / 12;
+
+                // 146 months * 3.75 days/month = 544.5 days, limited to 42*30 = 1260 days
+                // Since 544.5 < 1260, not limited. Result = 544.5 * 100 = 54,450
+                const days1 = 146 * 3.75;
+                const limitedDays1 = Math.min(days1, 42 * 30);
+                const expected = limitedDays1 * 100;
+                assert(Math.abs(app.taxExemptIndemnity - expected) < 1, 'Tax-Exempt: Period 1 limited to 1260 days (42 months)');
+            })();
+
+            // 24. Tax-Exempt - Period 2 limit (24 months * 30 days = 720 days total)
+            (() => {
+                const app = createTestApp();
+                app.initApp();
+                app.grossSalary = 36500; // 100/day
+                app.startDate = '2012-02-12';
+                app.endDate = '2020-01-01'; // 95 months
+                app.workedMonths = app.calculateMonthsFromDate(app.startDate, app.endDate);
+                app.daysPerYear = 33;
+                app.daysPerMonth = 33 / 12;
+
+                // 95 months * 2.75 days/month = 261.25 days
+                // limitedDays2 = Math.max(Math.min(0 + 261.25, 720) - 0, 0) = 261.25
+                // Result = 261.25 * 100 = 26,125
+                const days2 = 95 * 2.75;
+                const expected = days2 * 100;
+                assert(Math.abs(app.taxExemptIndemnity - expected) < 1, 'Tax-Exempt: Period 2 calculation');
             })();
 
             // Summary
