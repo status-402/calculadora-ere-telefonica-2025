@@ -157,10 +157,11 @@ const tests = {
                 app.daysPerYear = 20;
                 app.daysPerMonth = 20 / 12;
                 app.workedMonths = 24;
-                assert(app.exceedsCap === false, 'Cap: Not exceeded for 2 years');
+                assert(app.isCapped === false, 'Cap: Not exceeded when no cap set');
 
+                app.maxCompensationMonths = 12;
                 app.workedMonths = 240;
-                assert(app.exceedsCap === true, 'Cap: Exceeded for 20 years');
+                assert(app.isCapped === true, 'Cap: Exceeded for 20 years with 12 month cap');
             })();
 
             // 12. Total Indemnity Calculation
@@ -184,6 +185,37 @@ const tests = {
                 app.calculateMonthsFromDate();
 
                 assert(app.workedMonths === 0, 'Months: End before start = 0 months');
+            })();
+
+            // 14. Max Compensation Cap
+            (() => {
+                const app = createTestApp();
+                app.grossSalary = 36500; // 100/day (approx) -> Monthly = 3041.66
+                app.daysPerYear = 30;
+                app.daysPerMonth = 30 / 12; // 2.5 days/month
+                app.maxCompensationMonths = 12; // Cap at 12 monthly salaries (Total = 36500 approx? No, cap is in days)
+                // Cap logic in main.js: Math.min(totalDays, this.maxCompensationMonths * 30)
+                // Max days = 12 * 30 = 360 days.
+
+                // Case 1: Under cap (24 months worked)
+                // Days = 2.5 * 24 = 60 days
+                // 60 < 360
+                app.workedMonths = 24;
+                assert(app.isCapped === false, 'Cap: Not capped when indemnity < max amount');
+                // Indemnity = 100 * 60 = 6000
+                assert(Math.abs(app.totalIndemnity - 6000) < 1, 'Cap: Indemnity correct when under cap');
+
+                // Case 2: Over cap (150 months worked -> 12.5 years)
+                // Days = 2.5 * 150 = 375 days
+                // Max days = 360 days
+                // 375 > 360 -> Capped
+                app.workedMonths = 150;
+
+                assert(app.isCapped === true, 'Cap: Capped when indemnity > max amount');
+
+                // Expected Indemnity = DailySalary * MaxDays
+                // 100 * 360 = 36000
+                assert(Math.abs(app.totalIndemnity - 36000) < 1, 'Cap: Indemnity limited to max monthly salaries (converted to days)');
             })();
 
             // Summary

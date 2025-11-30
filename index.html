@@ -58,12 +58,17 @@
         </div>
 
         <div class="input-group">
-            <label>Antigüedad (Fechas) <span class="required-mark">*</span></label>
+            <label>Antigüedad (Fechas) <span class="required-mark">*</span>
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <span class="tooltip-text">Primer y último día de trabajo.</span>
+                </div>
+            </label>
             <div>
                 <div style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label style="font-size: 0.8rem; margin-bottom: 2px;">Inicio</label>
-                        <input type="date" x-model="startDate" class="date-input" :max="maxDate">
+                        <input type="date" x-model="startDate" class="date-input">
                     </div>
                     <div style="flex: 1;">
                         <label style="font-size: 0.8rem; margin-bottom: 2px;">Fin</label>
@@ -74,13 +79,27 @@
                 <div class="days-count" x-show="workedMonths > 0">
                     Total: <span x-text="workedMonths"></span> meses
                 </div>
+                <!- TODO Hacer comprobación de si fecha fin es menor que inicio mostar error aquí -->
             </div>
         </div>
 
         <div class="input-group">
             <label>Días indemnización / año <span class="required-mark" x-show="isDaysEditable">*</span></label>
-            <input type="number" x-model.number="daysPerYear" pattern="\d*" :readonly="!isDaysEditable"
-                :class="{'readonly': !isDaysEditable}">
+            <input type="number" x-model.number="daysPerYear" placeholder="Ej: 33" pattern="\d*"
+                :readonly="!isDaysEditable" :class="{'readonly': !isDaysEditable}">
+        </div>
+
+        <div class="input-group" x-show="isMaxCompensationMonthsEditable || maxCompensationMonths !== null">
+            <label>Máxima indemnización (meses) <span class="optional-mark"
+                    x-show="isMaxCompensationMonthsEditable">(Opcional)</span>
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <span class="tooltip-text">Tope máximo de mensualidades que se pueden percibir. Se aplica como 30
+                        días por cada mes (STS de 18-2-2016, recurso 3257/2014, ECLÍ:ES:TS:2016:893)</span>
+                </div>
+            </label>
+            <input type="number" x-model.number="maxCompensationMonths" placeholder="Ej: 12" pattern="\d*"
+                :readonly="!isMaxCompensationMonthsEditable" :class="{'readonly': !isMaxCompensationMonthsEditable}">
         </div>
 
         <div class="input-group" x-show="isExtrasEditable || extras.length > 0">
@@ -127,6 +146,8 @@
             </div>
         </div>
 
+
+        <!-- TODO Añadir el día por año, que sin eso tampoco vale -->
         <div x-show="grossSalary > 0 && workedMonths > 0" x-transition>
             <hr class="divider">
 
@@ -153,8 +174,8 @@
             <div class="result-box">
                 <span>TOTAL ESTIMADO</span>
                 <div class="total" x-text="formatCurrency(totalIndemnity)"></div>
-                <div x-show="exceedsCap" class="error-message">
-                    ⚠️ Supera el tope de 1 año de salario
+                <div x-show="isCapped" class="error-message">
+                    ⚠️ Indemnización limitada a <span x-text="maxCompensationMonths"></span> meses
                 </div>
 
                 <div class="calculation-explanation">
@@ -167,9 +188,9 @@
     </div>
 
     <script src="scripts/registry.js"></script>
-    <script src="scripts/custom.js"></script>
     <script src="scripts/example1.js"></script>
     <script src="scripts/example2.js"></script>
+    <script src="scripts/custom.js"></script>
     <script src="scripts/main.js"></script>
 
 </body>

@@ -8,6 +8,10 @@ Una herramienta web sencilla y eficaz para calcular estimaciones de indemnizaci�
 
 - **Cálculo Basado en Meses**: Sistema de cálculo mensual más preciso que cuenta los meses completos desde la fecha de inicio hasta la fecha de fin.
 - **Indemnización Completa**: Basado en salario bruto anual, beneficios, y antigüedad en meses.
+- **Límite de Indemnización**:
+  - Soporte para establecer un tope máximo de mensualidades.
+  - El cálculo respeta el límite de días (mensualidades × 30) si se excede.
+  - Se aplica como 30 días por cada mes por STS de 18-2-2016, recurso 3257/2014, ECLÍ:ES:TS:2016:893. Más información en las fuentes.
 - **Sistema de Estrategias Extensible**:
   - **Personalizado**: Permite ajustar todos los parámetros (días/año, bonus, beneficios, etc.).
   - **Perfiles de Empresa**: Fácilmente configurables mediante archivos JS independientes.
@@ -30,7 +34,8 @@ La calculadora utiliza el siguiente método:
 1. **Salario Diario** = (Salario Bruto Anual + Bonus + Beneficios) / 365
 2. **Días por Mes** = Días por Año / 12
 3. **Meses Trabajados** = Calculados desde fecha inicio hasta fecha fin
-4. **Indemnización** = Salario Diario × Días por Mes × Meses Trabajados + Primas
+4. **Aplicación de Topes**: Si existe un límite de mensualidades, la indemnización se ajusta al máximo de (Mensualidades Máximas × 30) días de salario.
+5. **Indemnización** = Salario Diario × (Min(Días por Mes × Meses Trabajados, Tope Días)) + Primas
 
 ### Cálculo de Meses
 
@@ -93,6 +98,7 @@ calculadoraEre/
        defaults: { 
            daysPerYear: 33,
            endDate: '2026-12-31', // Opcional
+           maxCompensationMonths: 24, // Opcional
            benefits: 1200,        // Opcional
            extras: [              // Opcional
                { years: 5, amount: 10000 },
@@ -104,7 +110,8 @@ calculadoraEre/
        showBonus: true,
        showBenefits: true,
        isBenefitsEditable: false,
-       isExtrasEditable: false
+       isExtrasEditable: false,
+       isMaxCompensationMonthsEditable: false // Opcional
    });
    ```
 3. Importa el script en `index.html`:

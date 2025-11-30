@@ -5,6 +5,7 @@ registerStrategy({
         daysPerYear: 50,
         endDate: '2026-03-31',
         benefits: 2400,
+        maxCompensationMonths: 42,
         extras: [
             { years: 5, amount: 15000 },
             { years: 10, amount: 20000 },
@@ -18,5 +19,6 @@ registerStrategy({
     showBonus: true,
     showBenefits: true,
     isBenefitsEditable: false,
-    isExtrasEditable: false
+    isExtrasEditable: false,
+    isMaxCompensationMonthsEditable: false
 });
