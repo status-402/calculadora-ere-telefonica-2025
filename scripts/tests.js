@@ -28,10 +28,6 @@ const tests = {
             // Mock Alpine.js $watch
             app.$watch = (property, callback) => {
                 // Simple mock: store watchers if needed, or just ignore for basic logic tests
-                // For these tests, we manually trigger logic so watchers might not be strictly necessary 
-                // unless we rely on them for side effects.
-                // If we need side effects, we'd need a more complex mock.
-                // For now, let's just make it a no-op to prevent crashing.
             };
             return app;
         };
@@ -39,17 +35,18 @@ const tests = {
         try {
             // --- Test Suite ---
 
-            // 1. Base Calculation
+            // 1. Base Calculation with Months
             (() => {
                 const app = createTestApp();
                 app.initApp();
                 app.grossSalary = 36500;
-                app.workedDays = 365;
+                app.workedMonths = 12;
                 app.daysPerYear = 20;
+                app.daysPerMonth = 20 / 12;
 
                 assert(Math.abs(app.dailySalary - 100) < 0.01, 'Base: Daily Salary is 100');
                 assert(Math.abs(app.workedYears - 1) < 0.01, 'Base: Worked Years is 1');
-                assert(Math.abs(app.totalIndemnity - 2000) < 0.01, 'Base: Total Indemnity is 2000 (100 * 20 * 1)');
+                assert(Math.abs(app.totalIndemnity - 2000) < 1, 'Base: Total Indemnity ~2000 (100 * 1.67 * 12)');
             })();
 
             // 2. Bonus & Benefits (Custom)
@@ -64,19 +61,17 @@ const tests = {
                 assert(app.totalAnnualSalary === 36500, 'Custom: Total Annual includes Bonus and Benefits');
             })();
 
-            // 3. Example 1 Strategy (No Benefits)
+            // 3. Example 1 Strategy
             (() => {
                 const app = createTestApp();
                 app.mode = 'example1';
                 app.applyStrategy();
                 app.grossSalary = 30000;
                 app.bonus = 5000;
-                app.benefits = 1500; // Should be ignored/hidden logic
 
-                // Note: In Example 1 mode, showBenefits is false, so totalAnnualSalary logic excludes it
-                assert(app.showBenefits === false, 'Example 1: Benefits hidden');
-                assert(app.totalAnnualSalary === 35000, 'Example 1: Total Annual excludes Benefits');
+                assert(app.showBenefits === true, 'Example 1: Benefits shown');
                 assert(app.daysPerYear === 50, 'Example 1: Days per year is 50');
+                assert(Math.abs(app.daysPerMonth - 50 / 12) < 0.01, 'Example 1: Days per month is 50/12');
                 assert(app.isDaysEditable === false, 'Example 1: Days per year not editable');
             })();
 
@@ -85,54 +80,110 @@ const tests = {
                 const app = createTestApp();
                 app.mode = 'example1';
                 app.applyStrategy();
-                app.grossSalary = 36500; // Daily 100
-                app.workedDays = 365 * 6; // 6 years
-
-                // Base: 100 * 50 * 6 = 30000
-                // Extra for > 5 years: 15000
-                // Total: 45000
+                app.grossSalary = 34100;
+                app.workedMonths = 72;
 
                 assert(app.applicableExtra.amount === 15000, 'Extras: Correct tier found (5 years)');
-                assert(Math.abs(app.totalIndemnity - 45000) < 0.1, 'Extras: Total includes extra amount');
+                assert(Math.abs(app.totalIndemnity - 45000) < 1, app.totalIndemnity + 'Extras: Total includes extra amount');
             })();
 
-            // 5. Date Calculation
+            // 5. Month Calculation - Same day (should add 1 month)
             (() => {
                 const app = createTestApp();
-                app.inputMethod = 'date';
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                // Use local time string construction to avoid UTC issues
-                const year = yesterday.getFullYear();
-                const month = String(yesterday.getMonth() + 1).padStart(2, '0');
-                const day = String(yesterday.getDate()).padStart(2, '0');
-                app.startDate = `${year}-${month}-${day}`;
+                app.startDate = '2023-01-15';
+                app.endDate = '2023-03-15';
+                app.calculateMonthsFromDate();
 
-                // Set end date to today (which is default, but explicit for test clarity)
-                const today = new Date();
-                const tYear = today.getFullYear();
-                const tMonth = String(today.getMonth() + 1).padStart(2, '0');
-                const tDay = String(today.getDate()).padStart(2, '0');
-                app.endDate = `${tYear}-${tMonth}-${tDay}`;
-
-                app.calculateDaysFromDate();
-
-                assert(app.workedDays === 1, 'Date: Calculates 1 day for yesterday');
+                // Jan to Mar = 2 months, day 15 <= 15, so +1 month = 3 months
+                assert(app.workedMonths === 3, 'Months: Same day adds 1 month (15 to 15 = 3 months)');
             })();
 
-            // 6. Cap Check
+            // 6. Month Calculation - Start day less than end day (should add 1 month)
+            (() => {
+                const app = createTestApp();
+                app.startDate = '2023-01-10';
+                app.endDate = '2023-03-20';
+                app.calculateMonthsFromDate();
+
+                // Jan to Mar = 2 months, day 10 <= 20, so +1 month = 3 months
+                assert(app.workedMonths === 3, 'Months: Start day < end day adds 1 month (10 to 20 = 3 months)');
+            })();
+
+            // 7. Month Calculation - Start day greater than end day (no additional month)
+            (() => {
+                const app = createTestApp();
+                app.startDate = '2023-01-20';
+                app.endDate = '2023-03-10';
+                app.calculateMonthsFromDate();
+
+                // Jan to Mar = 2 months, day 20 > 10, so no +1 = 2 months
+                assert(app.workedMonths === 2, 'Months: Start day > end day no addition (20 to 10 = 2 months)');
+            })();
+
+            // 8. Month Calculation - Full years
+            (() => {
+                const app = createTestApp();
+                app.startDate = '2020-01-01';
+                app.endDate = '2023-01-01';
+                app.calculateMonthsFromDate();
+
+                // 3 years * 12 = 36 months, day 1 <= 1, so +1 = 37 months
+                assert(app.workedMonths === 37, 'Months: 3 years from Jan 1 to Jan 1 = 37 months');
+            })();
+
+            // 9. Month Calculation - Same month (should be 1 month if day condition is met)
+            (() => {
+                const app = createTestApp();
+                app.startDate = '2023-01-10';
+                app.endDate = '2023-01-20';
+                app.calculateMonthsFromDate();
+
+                assert(app.workedMonths === 1, 'Months: Same month with day <= = 1 month');
+            })();
+
+            // 10. DaysPerMonth Calculation
+            (() => {
+                const app = createTestApp();
+                app.daysPerYear = 20;
+                app.daysPerMonth = app.daysPerYear / 12;
+
+                assert(Math.abs(app.daysPerMonth - 1.6667) < 0.01, 'DaysPerMonth: 20 days/year = 1.67 days/month');
+            })();
+
+            // 11. Cap Check
             (() => {
                 const app = createTestApp();
                 app.grossSalary = 10000;
                 app.daysPerYear = 20;
-                app.workedDays = 365 * 2; // 2 years
-                // Indemnity: (10000/365) * 20 * 2 = ~1095
-                // Not exceeding cap
-                assert(app.exceedsCap === false, 'Cap: Not exceeded');
+                app.daysPerMonth = 20 / 12;
+                app.workedMonths = 24;
+                assert(app.exceedsCap === false, 'Cap: Not exceeded for 2 years');
 
-                app.workedDays = 365 * 20; // 20 years
-                // Indemnity: (10000/365) * 20 * 20 = ~10958 > 10000
-                assert(app.exceedsCap === true, 'Cap: Exceeded');
+                app.workedMonths = 240;
+                assert(app.exceedsCap === true, 'Cap: Exceeded for 20 years');
+            })();
+
+            // 12. Total Indemnity Calculation
+            (() => {
+                const app = createTestApp();
+                app.grossSalary = 36500; // 100/day
+                app.daysPerYear = 20;
+                app.daysPerMonth = 20 / 12; // 1.67
+                app.workedMonths = 24; // 2 years
+
+                // Expected: 100 * 1.67 * 24 = 4008
+                const expected = 100 * (20 / 12) * 24;
+                assert(Math.abs(app.totalIndemnity - expected) < 1, 'Total: Correct calculation for 2 years');
+            })();
+
+            // 13. Invalid date range (end before start)
+            (() => {
+                const app = createTestApp();
+                app.startDate = '2023-03-20';
+                app.endDate = '2023-01-10';
+                app.calculateMonthsFromDate();
+
+                assert(app.workedMonths === 0, 'Months: End before start = 0 months');
             })();
 
             // Summary

@@ -3,8 +3,9 @@ function ereCalculator() {
         grossSalary: null,
         bonus: null,
         benefits: null,
-        workedDays: null,
+        workedMonths: null,
         daysPerYear: null,
+        daysPerMonth: null,
         mode: 'custom',
         isDaysEditable: true,
         showBonus: false,
@@ -13,7 +14,6 @@ function ereCalculator() {
         extras: [],
         isExtrasEditable: false,
         isEndDateEditable: true,
-        inputMethod: 'date', // 'days' or 'date'
         startDate: null,
         endDate: null,
         strategies: window.ereStrategies || [],
@@ -35,10 +35,13 @@ function ereCalculator() {
             this.$watch('mode', () => this.applyStrategy());
 
             // Watch for date changes
-            this.$watch('startDate', () => this.calculateDaysFromDate());
-            this.$watch('endDate', () => this.calculateDaysFromDate());
-            this.$watch('inputMethod', () => {
-                if (this.inputMethod === 'date') this.calculateDaysFromDate();
+            this.$watch('startDate', () => this.calculateMonthsFromDate());
+            this.$watch('endDate', () => this.calculateMonthsFromDate());
+
+            this.$watch('daysPerYear', (newValue) => {
+                if (newValue !== null) {
+                    this.daysPerMonth = newValue / 12;
+                }
             });
         },
 
@@ -51,6 +54,7 @@ function ereCalculator() {
             }
 
             this.daysPerYear = strategy.defaults.daysPerYear;
+            this.daysPerMonth = this.daysPerYear / 12;
             this.isDaysEditable = strategy.isDaysEditable;
             this.showBonus = strategy.showBonus;
             this.showBenefits = strategy.showBenefits;
@@ -78,22 +82,24 @@ function ereCalculator() {
             this.isEndDateEditable = strategy.hasOwnProperty('isEndDateEditable') ? strategy.isEndDateEditable : true;
         },
 
-        calculateDaysFromDate() {
-            if (this.inputMethod === 'date' && this.startDate && this.endDate) {
+        calculateMonthsFromDate() {
+            if (this.startDate && this.endDate) {
                 const start = new Date(this.startDate);
-                start.setHours(0, 0, 0, 0);
-
                 const end = new Date(this.endDate);
-                end.setHours(0, 0, 0, 0);
 
                 if (end < start) {
-                    this.workedDays = 0;
+                    this.workedMonths = 0;
                     return;
                 }
 
-                const diffTime = Math.abs(end - start);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                this.workedDays = diffDays;
+                this.workedMonths = (end.getFullYear() - start.getFullYear()) * 12;
+                this.workedMonths += end.getMonth() - start.getMonth();
+
+                // If start day <= end day, add 1 month
+                if (start.getDate() <= end.getDate()) {
+                    this.workedMonths += 1;
+                }
+                return
             }
         },
 
@@ -118,7 +124,7 @@ function ereCalculator() {
             const parts = [];
             if (this.grossSalary) parts.push(this.formatCurrency(this.grossSalary) + ' bruto');
             if (this.showBonus && this.bonus) parts.push(this.formatCurrency(this.bonus) + ' bonus');
-            if (this.showBenefits && this.benefits) parts.push(this.formatCurrency(this.benefits) + ' cheques restaurantes');
+            if (this.showBenefits && this.benefits) parts.push(this.formatCurrency(this.benefits) + ' beneficios');
 
             if (parts.length === 0) return '';
             const total = parts.join(' + ');
@@ -134,7 +140,7 @@ function ereCalculator() {
             return `${year}-${month}-${day}`;
         },
 
-        get workedYears() { return this.workedDays / 365; },
+        get workedYears() { return this.workedMonths / 12; },
 
         get applicableExtra() {
             if (!this.extras || this.extras.length === 0) return null;
@@ -144,7 +150,7 @@ function ereCalculator() {
         },
 
         get totalIndemnity() {
-            let total = this.dailySalary * this.daysPerYear * this.workedYears;
+            let total = this.dailySalary * this.daysPerMonth * this.workedMonths;
             if (this.applicableExtra) {
                 total += this.applicableExtra.amount;
             }
@@ -154,8 +160,8 @@ function ereCalculator() {
         get exceedsCap() { return this.daysPerYear == 20 && this.totalIndemnity > this.grossSalary; },
 
         get calculationExplanation() {
-            if (!this.grossSalary || !this.workedDays || !this.daysPerYear) return '';
-            let explanation = `${this.formatCurrency(this.dailySalary)} (diario) × ${this.daysPerYear} (días/año) × ${this.workedYears.toFixed(2)} (años)`;
+            if (!this.grossSalary || !this.workedMonths || !this.daysPerYear) return '';
+            let explanation = `${this.formatCurrency(this.dailySalary)} (diario) × ${this.daysPerMonth.toFixed(2)} (días/mes) × ${this.workedMonths} (meses)`;
 
             if (this.applicableExtra) {
                 explanation += ` + ${this.formatCurrency(this.applicableExtra.amount)} (prima por > ${this.applicableExtra.years} años)`;
@@ -166,6 +172,10 @@ function ereCalculator() {
 
         formatCurrency(value) {
             return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value || 0);
+        },
+
+        formatDecimal(value, decimals = 2) {
+            return Number(value || 0).toFixed(decimals);
         }
     }
 }
