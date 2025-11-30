@@ -218,6 +218,28 @@ const tests = {
                 assert(Math.abs(app.totalIndemnity - 36000) < 1, 'Cap: Indemnity limited to max monthly salaries (converted to days)');
             })();
 
+            // 15. Installment Payments
+            (() => {
+                const app = createTestApp();
+                app.grossSalary = 30000;
+                // Mock total indemnity for simplicity or let it calculate
+                // Let's rely on calculation. 30000/365 = 82.19/day
+                // Let's set daysPerYear = 365 for easy math -> 1 day/day
+                app.daysPerYear = 365;
+                app.daysPerMonth = 365 / 12;
+                app.workedMonths = 12;
+                // Total = 82.19 * (365/12 * 12) = 82.19 * 365 = 30000
+
+                app.paymentDates = ['2025-06-01', '2026-06-01'];
+
+                const installments = app.installmentPayments;
+                assert(installments.length === 2, 'Installments: Correct number of payments');
+                assert(installments[0].date === '2025-06-01', 'Installments: Correct first date');
+                assert(Math.abs(installments[0].amount - 15000) < 1, 'Installments: Correct split amount (30000 / 2 = 15000)');
+                assert(installments[1].date === '2026-06-01', 'Installments: Correct second date');
+                assert(Math.abs(installments[1].amount - 15000) < 1, 'Installments: Correct split amount (30000 / 2 = 15000)');
+            })();
+
             // Summary
             const summary = document.createElement('div');
             summary.className = 'summary';

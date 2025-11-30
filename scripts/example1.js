@@ -12,7 +12,8 @@ registerStrategy({
             { years: 15, amount: 25000 },
             { years: 20, amount: 30000 },
             { years: 25, amount: 35000 }
-        ]
+        ],
+        paymentDates: ['2026-06-01', '2027-06-01']
     },
     isDaysEditable: false,
     isEndDateEditable: false,

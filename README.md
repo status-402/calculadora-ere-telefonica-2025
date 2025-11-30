@@ -7,16 +7,15 @@ Una herramienta web sencilla y eficaz para calcular estimaciones de indemnizaci�
 ## Características
 
 - **Cálculo Basado en Meses**: Sistema de cálculo mensual más preciso que cuenta los meses completos desde la fecha de inicio hasta la fecha de fin.
-- **Indemnización Completa**: Basado en salario bruto anual, beneficios, y antigüedad en meses.
-- **Límite de Indemnización**:
-  - Soporte para establecer un tope máximo de mensualidades.
+- **Cálculo de Indemnización**: Basado en salario bruto, antigüedad y días por año estipulados.
+- **Pagos Fraccionados**: Posibilidad de configurar fechas de pago para dividir el importe total en plazos.
+- **Topes Legales**: Soporte para limitar la indemnización a un máximo de mensualidades (ej. 12 meses).
+- **Primas por Antigüedad**: Configuración de tramos de antigüedad para añadir importes extra.
   - El cálculo respeta el límite de días (mensualidades × 30) si se excede.
   - Se aplica como 30 días por cada mes por STS de 18-2-2016, recurso 3257/2014, ECLÍ:ES:TS:2016:893. Más información en las fuentes.
 - **Sistema de Estrategias Extensible**:
   - **Personalizado**: Permite ajustar todos los parámetros (días/año, bonus, beneficios, etc.).
   - **Perfiles de Empresa**: Fácilmente configurables mediante archivos JS independientes.
-- **Primas por Antigüedad**:
-  - Sistema flexible para añadir reglas de bonus extra según años trabajados.
 - **Cálculo Automático de Periodo**: 
   - Introduce fechas de inicio y fin.
   - El sistema calcula automáticamente los meses trabajados.
@@ -97,12 +96,12 @@ calculadoraEre/
        label: 'Nombre Visible de la Empresa',
        defaults: { 
            daysPerYear: 33,
-           endDate: '2026-12-31', // Opcional
+           endDate: '2024-12-31', // Opcional, actualizado
            maxCompensationMonths: 24, // Opcional
            benefits: 1200,        // Opcional
-           extras: [              // Opcional
-               { years: 5, amount: 10000 },
-               { years: 10, amount: 20000 }
+           paymentDates: ['2025-06-01', '2026-06-01'], // Fechas para pagos fraccionados
+           extras: [              // Opcional, actualizado
+               { years: 10, amount: 5000 }
            ]
        },
        isDaysEditable: false,

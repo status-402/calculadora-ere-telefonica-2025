@@ -18,6 +18,7 @@ function ereCalculator() {
         endDate: null,
         maxCompensationMonths: null,
         isMaxCompensationMonthsEditable: true,
+        paymentDates: [],
         strategies: window.ereStrategies || [],
 
         initApp() {
@@ -89,6 +90,12 @@ function ereCalculator() {
                 this.maxCompensationMonths = null;
             }
             this.isMaxCompensationMonthsEditable = strategy.hasOwnProperty('isMaxCompensationMonthsEditable') ? strategy.isMaxCompensationMonthsEditable : true;
+
+            if (strategy.defaults && strategy.defaults.paymentDates) {
+                this.paymentDates = strategy.defaults.paymentDates;
+            } else {
+                this.paymentDates = [];
+            }
         },
 
         calculateMonthsFromDate() {
@@ -188,6 +195,16 @@ function ereCalculator() {
             }
 
             return explanation;
+        },
+
+        get installmentPayments() {
+            if (!this.paymentDates || this.paymentDates.length === 0) return [];
+            const total = this.totalIndemnity;
+            const amountPerInstallment = total / this.paymentDates.length;
+            return this.paymentDates.map(date => ({
+                date: date,
+                amount: amountPerInstallment
+            }));
         },
 
         formatCurrency(value) {
