@@ -387,6 +387,63 @@ const tests = {
                 assert(Math.abs(app.taxExemptIndemnity - expected) < 1, 'Tax-Exempt: Period 2 calculation');
             })();
 
+            // 25. Irregular Income - Payment Years
+            (() => {
+                const app = createTestApp();
+                app.paymentDates = ['2025-01-01', '2025-06-01', '2026-01-01'];
+                assert(app.paymentYears === 2, 'Irregular Income: Payment years count distinct years (2025, 2026)');
+            })();
+
+            // 26. Irregular Income - Eligibility (True)
+            (() => {
+                const app = createTestApp();
+                app.paymentDates = ['2025-01-01', '2026-01-01']; // 2 years
+                // Required: Start + (2*2) years + 1 day = Start + 4 years + 1 day
+
+                app.startDate = '2020-01-01';
+                // Target = 2024-01-02
+                app.endDate = '2024-02-01'; // Well past target
+
+                assert(app.isIrregularIncome === true, 'Irregular Income: Eligible when date range > required');
+            })();
+
+            // 27. Irregular Income - Eligibility (False)
+            (() => {
+                const app = createTestApp();
+                app.paymentDates = ['2025-01-01', '2026-01-01']; // 2 years
+                // Required: Start + 4 years + 1 day
+
+                app.startDate = '2020-01-01';
+                // Target = 2024-01-02
+                app.endDate = '2024-01-01'; // Exactly 4 years -> False
+
+                assert(app.isIrregularIncome === false, 'Irregular Income: Not eligible when date range < required');
+            })();
+
+            // 28. Irregular Income - Reduction Calculation (Removed)
+            // Test removed as reduction amount is no longer calculated/displayed.
+
+            // 29. Irregular Income - Single Payment Default & Exact Date
+            (() => {
+                const app = createTestApp();
+                app.paymentDates = []; // No installments -> 1 year
+                assert(app.paymentYears === 1, 'Irregular Income: Defaults to 1 payment year if no installments');
+
+                // Required: Start + (1*2) years + 1 day <= End
+                // Let's say Start = 2020-01-01
+                // Target = 2020-01-01 + 2 years = 2022-01-01 + 1 day = 2022-01-02
+
+                app.startDate = '2020-01-01';
+
+                // Case A: End = 2022-01-01 (Exactly 2 years) -> False
+                app.endDate = '2022-01-01';
+                assert(app.isIrregularIncome === false, 'Irregular Income: Not eligible at exactly 2 years');
+
+                // Case B: End = 2022-01-02 (2 years + 1 day) -> True
+                app.endDate = '2022-01-02';
+                assert(app.isIrregularIncome === true, 'Irregular Income: Eligible at exactly 2 years + 1 day');
+            })();
+
             // Summary
             const summary = document.createElement('div');
             summary.className = 'summary';

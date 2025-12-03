@@ -321,6 +321,28 @@ function ereCalculator() {
             }));
         },
 
+        get paymentYears() {
+            if (!this.paymentDates || this.paymentDates.length === 0) return 1;
+            const years = new Set(this.paymentDates.map(date => new Date(date).getFullYear()));
+            return years.size;
+        },
+
+        get isIrregularIncome() {
+            if (!this.startDate || !this.endDate) return false;
+
+            const start = new Date(this.startDate);
+            const end = new Date(this.endDate);
+            const yearsToAdd = this.paymentYears * 2;
+
+            const targetDate = new Date(start);
+            targetDate.setFullYear(targetDate.getFullYear() + yearsToAdd);
+            targetDate.setDate(targetDate.getDate() + 1);
+
+            return end >= targetDate;
+        },
+
+
+
         formatCurrency(value) {
             return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value || 0);
         },

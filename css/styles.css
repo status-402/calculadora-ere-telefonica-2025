@@ -391,3 +391,67 @@ input:focus {
     margin-top: 5px;
     text-align: left;
 }
+
+.text-error {
+    color: #d32f2f;
+}
+
+/* Utility Classes */
+.flex-row {
+    display: flex;
+    gap: 10px;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.input-label-small {
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+}
+
+.flex-between-center {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mb-6 {
+    margin-bottom: 6px;
+}
+
+.mb-0 {
+    margin-bottom: 0;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-small-opacity {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.text-info {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.installment-section {
+    margin-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 10px;
+}
+
+.mt-5 {
+    margin-top: 5px;
+}
+
+.installment-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}

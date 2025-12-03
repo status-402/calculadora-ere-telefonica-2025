@@ -30,6 +30,10 @@ Una herramienta web sencilla y eficaz para calcular estimaciones de indemnizaci�
   - Aplica el límite legal de 180.000€.
   - Muestra el desglose detallado del cálculo por periodos.
 - **Validación de Fechas**: Indicación visual cuando la fecha de fin es anterior a la fecha de inicio.
+- **Renta Irregular**:
+  - Detecta automáticamente si se tiene derecho a la reducción del 30% por renta irregular.
+  - Compara la antigüedad con los años de cobro (debe superar el doble de años de cobro más un día).
+  - Muestra claramente si aplica o no la reducción.
 - **Privacidad Total**: Todo el cálculo se realiza en el navegador del cliente. Ningún dato es enviado a servidores externos.
 
 ## Metodología de Cálculo
