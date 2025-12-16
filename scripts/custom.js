@@ -2,13 +2,13 @@ registerStrategy({
     name: 'custom',
     label: 'Personalizado',
     defaults: {
-        daysPerYear: 23,
-        maxCompensationMonths: 12,
+        daysPerYear1: 45,
+        daysPerYear2: 33,
         extras: []
     },
     isDaysEditable: true,
-    showBonus: true,
-    showBenefits: true,
+    showBonus: false,
+    showBenefits: false,
     isExtrasEditable: true,
     isMaxCompensationMonthsEditable: true
 });

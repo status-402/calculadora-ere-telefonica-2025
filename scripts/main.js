@@ -4,8 +4,10 @@ function ereCalculator() {
         bonus: null,
         benefits: null,
         workedMonths: null,
-        daysPerYear: null,
-        daysPerMonth: null,
+        daysPerYear1: null,
+        daysPerYear2: null,
+        daysPerMonth1: null,
+        daysPerMonth2: null,
         mode: window.ereStrategies[0].name,
         isDaysEditable: true,
         showBonus: false,
@@ -45,9 +47,14 @@ function ereCalculator() {
                 this.workedMonths = this.calculateMonthsFromDate(this.startDate, this.endDate);
             });
 
-            this.$watch('daysPerYear', (newValue) => {
+            this.$watch('daysPerYear1', (newValue) => {
                 if (newValue !== null) {
-                    this.daysPerMonth = newValue / 12;
+                    this.daysPerMonth1 = newValue / 12;
+                }
+            });
+            this.$watch('daysPerYear2', (newValue) => {
+                if (newValue !== null) {
+                    this.daysPerMonth2 = newValue / 12;
                 }
             });
         },
@@ -59,8 +66,17 @@ function ereCalculator() {
                 return;
             }
 
-            this.daysPerYear = strategy.defaults.daysPerYear;
-            this.daysPerMonth = this.daysPerYear / 12;
+            // Handle legacy or single daysPerYear config
+            if (strategy.defaults.daysPerYear !== undefined) {
+                this.daysPerYear1 = strategy.defaults.daysPerYear;
+                this.daysPerYear2 = strategy.defaults.daysPerYear;
+            } else {
+                if (strategy.defaults.daysPerYear1 !== undefined) this.daysPerYear1 = strategy.defaults.daysPerYear1;
+                if (strategy.defaults.daysPerYear2 !== undefined) this.daysPerYear2 = strategy.defaults.daysPerYear2;
+            }
+
+            this.daysPerMonth1 = this.daysPerYear1 / 12;
+            this.daysPerMonth2 = this.daysPerYear2 / 12;
             this.isDaysEditable = strategy.isDaysEditable;
             this.showBonus = strategy.showBonus;
             this.showBenefits = strategy.showBenefits;
@@ -158,7 +174,28 @@ function ereCalculator() {
         },
 
         get totalDaysIndemnity() {
-            const totalDays = this.daysPerMonth * this.workedMonths;
+            if (!this.startDate || !this.endDate) return 0;
+            const splitDate = new Date('2012-02-12');
+            const start = new Date(this.startDate);
+            const end = new Date(this.endDate);
+
+            let months1 = 0;
+            let months2 = 0;
+
+            if (start < splitDate) {
+                const end1 = end < splitDate ? end : new Date('2012-02-11');
+                months1 = this.calculateMonthsFromDate(start, end1);
+            }
+
+            if (end >= splitDate) {
+                const start2 = start > splitDate ? start : splitDate;
+                months2 = this.calculateMonthsFromDate(start2, end);
+            }
+
+            const days1 = months1 * this.daysPerMonth1;
+            const days2 = months2 * this.daysPerMonth2;
+            const totalDays = days1 + days2;
+
             if (this.maxCompensationMonths && this.maxCompensationMonths > 0) {
                 return Math.min(totalDays, this.maxCompensationMonths * 30);
             } else {
@@ -175,9 +212,26 @@ function ereCalculator() {
         },
 
         get isCapped() {
-
             if (this.maxCompensationMonths && this.maxCompensationMonths > 0) {
-                return this.daysPerMonth * this.workedMonths > this.maxCompensationMonths * 30;
+                const splitDate = new Date('2012-02-12');
+                const start = new Date(this.startDate);
+                const end = new Date(this.endDate);
+
+                let months1 = 0;
+                let months2 = 0;
+
+                if (start < splitDate) {
+                    const end1 = end < splitDate ? end : new Date('2012-02-11');
+                    months1 = this.calculateMonthsFromDate(start, end1);
+                }
+
+                if (end >= splitDate) {
+                    const start2 = start > splitDate ? start : splitDate;
+                    months2 = this.calculateMonthsFromDate(start2, end);
+                }
+                const totalRawDays = (months1 * this.daysPerMonth1) + (months2 * this.daysPerMonth2);
+
+                return totalRawDays > this.maxCompensationMonths * 30;
             } else {
                 return false;
             }
@@ -191,16 +245,36 @@ function ereCalculator() {
         },
 
         get calculationExplanation() {
-            if (!this.grossSalary || !this.workedMonths || !this.daysPerYear) return '';
             let explanation = '';
             if (this.isCapped) {
-                explanation = `${this.formatCurrency(this.dailySalary)} (diario) × ${this.maxCompensationMonths * 30} (máximo de meses en días)`;
+                explanation = `Límite máximo de ${this.maxCompensationMonths} meses (${this.maxCompensationMonths * 30} días) × ${this.formatCurrency(this.dailySalary)}`;
             } else {
-                explanation = `${this.formatCurrency(this.dailySalary)} (diario) × ${this.daysPerMonth.toFixed(2)} (días/mes) × ${this.workedMonths} (meses)`;
+                // Breakdown calculation
+                const splitDate = new Date('2012-02-12');
+                const start = new Date(this.startDate);
+                const end = new Date(this.endDate);
+                let explanationParts = [];
+
+                if (start < splitDate) {
+                    const end1 = end < splitDate ? end : new Date('2012-02-11');
+                    let months1 = this.calculateMonthsFromDate(start, end1);
+                    if (months1 > 0) {
+                        explanationParts.push(`Hasta 11/02/2012: ${months1} meses × ${this.formatDecimal(this.daysPerMonth1)} días/mes = ${this.formatDecimal(months1 * this.daysPerMonth1)} días`);
+                    }
+                }
+
+                if (end >= splitDate) {
+                    const start2 = start > splitDate ? start : splitDate;
+                    let months2 = this.calculateMonthsFromDate(start2, end);
+                    if (months2 > 0) {
+                        explanationParts.push(`Desde 12/02/2012: ${months2} meses × ${this.formatDecimal(this.daysPerMonth2)} días/mes = ${this.formatDecimal(months2 * this.daysPerMonth2)} días`);
+                    }
+                }
+                explanation = explanationParts.join('<br>') + `<br>Total: ${this.formatDecimal(this.totalDaysIndemnity)} × ${this.formatCurrency(this.dailySalary)} = ${this.formatCurrency(this.totalDaysIndemnity * this.dailySalary)}`;
             }
 
             if (this.applicableExtra) {
-                explanation += ` + ${this.formatCurrency(this.applicableExtra.amount)} (prima por > ${this.applicableExtra.years} años)`;
+                explanation += `<br>+ ${this.formatCurrency(this.applicableExtra.amount)} (prima de voluntariedad > ${this.applicableExtra.years} años)`;
             }
 
             return explanation;

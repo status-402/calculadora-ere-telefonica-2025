@@ -2,7 +2,8 @@ registerStrategy({
     name: 'example1',
     label: 'Example 1',
     defaults: {
-        daysPerYear: 50,
+        daysPerYear1: 50,
+        daysPerYear2: 50,
         endDate: '2026-03-31',
         benefits: 2400,
         maxCompensationMonths: 42,

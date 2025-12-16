@@ -116,8 +116,8 @@ calculadoraEre/
     ├── registry.js         # Sistema de registro de estrategias
     ├── main.js             # Lógica principal de la calculadora
     ├── custom.js           # Estrategia personalizable
-    ├── example1.js         # Ejemplo de perfil de empresa 1
-    ├── example2.js         # Ejemplo de perfil de empresa 2
+    ├── voluntary.js        # Perfil Voluntario TID, TSA TGS
+    ├── forced.js           # Perfil Forzado TID, TSA TGS
     └── tests.js            # Tests automatizados
 ```
 
