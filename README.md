@@ -13,6 +13,7 @@ Una herramienta web sencilla y eficaz para calcular estimaciones de indemnizaci�
 - **Primas por Antigüedad**: Configuración de tramos de antigüedad para añadir importes extra.
   - El cálculo respeta el límite de días (mensualidades × 30) si se excede.
   - Se aplica como 30 días por cada mes por STS de 18-2-2016, recurso 3257/2014, ECLÍ:ES:TS:2016:893. Más información en las fuentes.
+- **Antigüedad I+D**: Opción para deducir la antigüedad específica del colectivo I+D del salario bruto, configurable por perfil.
 - **Sistema de Estrategias Extensible**:
   - **Personalizado**: Permite ajustar todos los parámetros (días/año, bonus, beneficios, etc.).
   - **Perfiles de Empresa**: Fácilmente configurables mediante archivos JS independientes.
@@ -40,7 +41,7 @@ Una herramienta web sencilla y eficaz para calcular estimaciones de indemnizaci�
 
 La calculadora utiliza el siguiente método:
 
-1. **Salario Diario** = (Salario Bruto Anual + Bonus + Beneficios) / 365
+1. **Salario Diario** = (Salario Bruto Anual + Bonus + Beneficios - Antigüedad I+D) / 365
 2. **Días por Mes** = Días por Año / 12
 3. **Meses Trabajados** = Calculados desde fecha inicio hasta fecha fin
 4. **Aplicación de Topes**: Si existe un límite de mensualidades, la indemnización se ajusta al máximo de (Mensualidades Máximas × 30) días de salario.
@@ -144,6 +145,7 @@ calculadoraEre/
        showBonus: true,
        showBenefits: true,
        isBenefitsEditable: false,
+       showIdSeniority: false, // Opcional, por defecto false. true para mostrar campo antig. I+D
        isExtrasEditable: false,
        isMaxCompensationMonthsEditable: false // Opcional
    });

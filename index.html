@@ -45,7 +45,13 @@
         </div>
 
         <div class="input-group">
-            <label>Salario Bruto Anual (€) <span class="required-mark">*</span></label>
+            <label>Salario Bruto Anual (€) <span class="required-mark">*</span>
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <span class="tooltip-text">Incluir salario anual y bonus completo. No incluir cheques restaurante,
+                        guardias ni otros conceptos.</span>
+                </div>
+            </label>
             <input type="number" x-model.number="grossSalary" placeholder="Ej: 25000" pattern="\d*" step="1000">
         </div>
 
@@ -59,6 +65,17 @@
                     x-show="isBenefitsEditable">(Opcional)</span></label>
             <input type="number" x-model.number="benefits" placeholder="Ej: 1000" pattern="\d*" step="100"
                 :readonly="!isBenefitsEditable" :class="{'readonly': !isBenefitsEditable}">
+        </div>
+
+        <div class="input-group" x-show="showIdSeniority">
+            <label>Antigüedad I+D (€) <span class="optional-mark">(Opcional)</span>
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <span class="tooltip-text">Indicar importe anual de antigüedad para colectivo I+D. Dejar a 0 si no
+                        aplica. Se restará del salario bruto para el cálculo.</span>
+                </div>
+            </label>
+            <input type="number" x-model.number="idSeniority" placeholder="Ej: 0" pattern="\d*" step="100">
         </div>
 
         <div class="input-group">

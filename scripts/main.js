@@ -3,6 +3,7 @@ function ereCalculator() {
         grossSalary: null,
         bonus: null,
         benefits: null,
+        idSeniority: null,
         workedMonths: null,
         daysPerYear1: null,
         daysPerYear2: null,
@@ -14,6 +15,7 @@ function ereCalculator() {
         showBonus: false,
         showBenefits: false,
         isBenefitsEditable: true,
+        showIdSeniority: false,
         extras: [],
         isExtrasEditable: false,
         isEndDateEditable: true,
@@ -90,6 +92,7 @@ function ereCalculator() {
             this.showBonus = strategy.showBonus;
             this.showBenefits = strategy.showBenefits;
             this.isBenefitsEditable = strategy.hasOwnProperty('isBenefitsEditable') ? strategy.isBenefitsEditable : true;
+            this.showIdSeniority = strategy.hasOwnProperty('showIdSeniority') ? strategy.showIdSeniority : false;
 
             // Deep copy extras to avoid reference issues
             this.extras = JSON.parse(JSON.stringify(strategy.defaults?.extras || []));
@@ -101,6 +104,10 @@ function ereCalculator() {
                 this.benefits = null;
             } else if (strategy.defaults && strategy.defaults.benefits) {
                 this.benefits = strategy.defaults.benefits;
+            }
+
+            if (!this.showIdSeniority) {
+                this.idSeniority = null;
             }
 
             // Set end date from strategy default or today
@@ -158,7 +165,8 @@ function ereCalculator() {
             let total = (this.grossSalary || 0);
             if (this.showBonus) total += (this.bonus || 0);
             if (this.showBenefits) total += (this.benefits || 0);
-            return total;
+            if (this.idSeniority) total -= (this.idSeniority || 0);
+            return Math.max(0, total);
         },
 
         get dailySalary() { return this.totalAnnualSalary / 365; },
@@ -168,9 +176,10 @@ function ereCalculator() {
             if (this.grossSalary) parts.push(this.formatCurrency(this.grossSalary) + ' bruto');
             if (this.showBonus && this.bonus) parts.push(this.formatCurrency(this.bonus) + ' bonus');
             if (this.showBenefits && this.benefits) parts.push(this.formatCurrency(this.benefits) + ' beneficios');
+            if (this.idSeniority) parts.push('-' + this.formatCurrency(this.idSeniority) + ' antig. I+D');
 
             if (parts.length === 0) return '';
-            const total = parts.join(' + ');
+            const total = parts.join(' + ').replace(/\+ -/g, '- ');
             return `(${total}) / 365`;
         },
 

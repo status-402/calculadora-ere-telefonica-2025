@@ -66,6 +66,21 @@ const tests = {
                 app.benefits = 1500;
 
                 assert(app.totalAnnualSalary === 36500, 'Custom: Total Annual includes Bonus and Benefits');
+                assert(app.totalAnnualSalary === 36500, 'Custom: Total Annual includes Bonus and Benefits');
+            })();
+
+            // 2b. I+D Seniority Deduction
+            (() => {
+                const app = createTestApp();
+                app.grossSalary = 50000;
+                app.idSeniority = 5000;
+
+                // Should subtract 5000 from 50000
+                assert(app.totalAnnualSalary === 45000, 'I+D Seniority: Deducted from gross salary');
+
+                // Ensure non-negative
+                app.idSeniority = 60000;
+                assert(app.totalAnnualSalary === 0, 'I+D Seniority: Salary cannot be negative');
             })();
 
             // 3. Example 1 Strategy
