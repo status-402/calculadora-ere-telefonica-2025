@@ -9,6 +9,7 @@ function ereCalculator() {
         daysPerMonth1: null,
         daysPerMonth2: null,
         mode: window.ereStrategies[0].name,
+        lastMode: window.ereStrategies[0].name,
         isDaysEditable: true,
         showBonus: false,
         showBenefits: false,
@@ -36,8 +37,16 @@ function ereCalculator() {
             // Apply initial strategy
             this.applyStrategy();
 
-            // Watch for mode changes
-            this.$watch('mode', () => this.applyStrategy());
+            this.$watch('mode', (newMode) => {
+                const strategy = this.strategies.find(s => s.name === newMode);
+                if (strategy && strategy.url) {
+                    window.open(strategy.url, '_blank');
+                    this.mode = this.lastMode;
+                } else {
+                    this.lastMode = newMode;
+                    this.applyStrategy();
+                }
+            });
 
             // Watch for date changes
             this.$watch('startDate', () => {
