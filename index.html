@@ -45,11 +45,10 @@
         </div>
 
         <div class="input-group">
-            <label>Salario Bruto Anual (€) <span class="required-mark">*</span>
+            <label>Compensación total anual (€) <span class="required-mark">*</span>
                 <div class="tooltip-container">
                     <span class="tooltip-icon">?</span>
-                    <span class="tooltip-text">Incluir salario anual y bonus completo. No incluir cheques restaurante,
-                        guardias ni otros conceptos.</span>
+                    <span class="tooltip-text">En succesfactor Annual Total Compensation (CG00003). </span>
                 </div>
             </label>
             <input type="number" x-model.number="grossSalary" placeholder="Ej: 25000" pattern="\d*" step="1000">
@@ -67,22 +66,11 @@
                 :readonly="!isBenefitsEditable" :class="{'readonly': !isBenefitsEditable}">
         </div>
 
-        <div class="input-group" x-show="showIdSeniority">
-            <label>Antigüedad I+D (€) <span class="optional-mark">(Opcional)</span>
-                <div class="tooltip-container">
-                    <span class="tooltip-icon">?</span>
-                    <span class="tooltip-text">Indicar importe anual de antigüedad para colectivo I+D. Dejar a 0 si no
-                        aplica. Se restará del salario bruto para el cálculo.</span>
-                </div>
-            </label>
-            <input type="number" x-model.number="idSeniority" placeholder="Ej: 0" pattern="\d*" step="100">
-        </div>
-
         <div class="input-group">
             <label>Antigüedad (Fechas) <span class="required-mark">*</span>
                 <div class="tooltip-container">
                     <span class="tooltip-icon">?</span>
-                    <span class="tooltip-text">Primer y último día de trabajo.</span>
+                    <span class="tooltip-text">Fecha de inicio del contrato actual (No la del grupo Telefonica).</span>
                 </div>
             </label>
             <div>
@@ -267,7 +255,7 @@
         </div>
 
         <div class="footer-info">
-            Condiciones actualizadas a día 16/12/2025
+            Condiciones actualizadas a día 21/12/2025
         </div>
     </div>
 

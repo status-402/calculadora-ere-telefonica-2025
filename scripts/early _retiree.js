@@ -7,6 +7,5 @@ registerStrategy({
     showBonus: false,
     showBenefits: false,
     isExtrasEditable: false,
-    showIdSeniority: true,
     isMaxCompensationMonthsEditable: false
 });

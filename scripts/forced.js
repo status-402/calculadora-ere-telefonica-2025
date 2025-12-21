@@ -13,6 +13,5 @@ registerStrategy({
     showBenefits: false,
     isBenefitsEditable: false,
     isExtrasEditable: false,
-    showIdSeniority: true,
     isMaxCompensationMonthsEditable: false
 });
