@@ -300,14 +300,40 @@ const tests = {
                 app.workedMonths = 12;
                 // Total = 82.19 * (365/12 * 12) = 82.19 * 365 = 30000
 
-                app.paymentDates = ['2025-06-01', '2026-06-01'];
+                app.payments = [{ label: 'Pago 1', date: '2025-06-01' }, { label: 'Pago 2', date: '2026-06-01' }];
+
+                // Total Indemnity = 30000.
+                // We need to know Exempt amount for this test scenario.
+                // 365 days/year -> 1 day/day.
+                // Start 2024-01-01 to 2024-12-31. 12 months.
+                // All Post 2012. Days = 365/year = 365 days. 
+                // Tax Exempt Calc: 12 months * 2.75? No, daysPerYear is 365/12 = 30.41 days/month.
+                // However, tax exempt uses hardcoded 2.75 / 3.75 days per month (or daysPerYear 33/45).
+                // It does NOT use the configured daysPerYear for strategies, it uses legally fixed values.
+                // So for 2024 (Post 2012):
+                // 12 months * 2.75 = 33 days exempt.
+                // Daily Salary = 30000 / 365 = 82.19.
+                // Exempt = 33 * 82.19 = 2712.27.
+
+                // Taxable = 30000 - 2712.27 = 27287.73.
+                // Split: Year 1 = 2712.27. Year 2 = 27287.73 / 1 = 27287.73.
+                // Wait, if N=2, Year 1 = Exempt. Year 2 = Taxable / 1.
 
                 const installments = app.installmentPayments;
                 assert(installments.length === 2, 'Installments: Correct number of payments');
                 assert(installments[0].date === '2025-06-01', 'Installments: Correct first date');
-                assert(Math.abs(installments[0].amount - 15000) < 1, 'Installments: Correct split amount (30000 / 2 = 15000)');
-                assert(installments[1].date === '2026-06-01', 'Installments: Correct second date');
-                assert(Math.abs(installments[1].amount - 15000) < 1, 'Installments: Correct split amount (30000 / 2 = 15000)');
+
+                // We can't easily hardcode expected values without exact calculation.
+                // Let's rely on checking that Sum = Total and Year 1 != Year 2 (if Exempt != Taxable/N)
+                // Actually, let's just assert Sum matches Total.
+                const totalInstallments = installments.reduce((acc, curr) => acc + curr.amount, 0);
+                assert(Math.abs(totalInstallments - 30000) < 1, 'Installments: Sum equals Total Indemnity');
+
+                // Check Split Logic roughly
+                // Exempt is definitely less than 15000 (half).
+                // So Year 1 should be small (~2712). Year 2 should be large (~27287).
+                assert(installments[0].amount < installments[1].amount, 'Installments: Year 1 (Exempt) < Year 2 (Taxable) in this scenario');
+                assert(Math.abs(installments[0].amount - app.taxExemptIndemnity) < 1, 'Installments: Year 1 equals Exempt Amount');
             })();
 
             // 16. Tax-Exempt Indemnity - All Pre-2012
@@ -472,14 +498,14 @@ const tests = {
             // 25. Irregular Income - Payment Years
             (() => {
                 const app = createTestApp();
-                app.paymentDates = ['2025-01-01', '2025-06-01', '2026-01-01'];
+                app.payments = [{ date: '2025-01-01' }, { date: '2025-06-01' }, { date: '2026-01-01' }];
                 assert(app.paymentYears === 2, 'Irregular Income: Payment years count distinct years (2025, 2026)');
             })();
 
             // 26. Irregular Income - Eligibility (True)
             (() => {
                 const app = createTestApp();
-                app.paymentDates = ['2025-01-01', '2026-01-01']; // 2 years
+                app.payments = [{ date: '2025-01-01' }, { date: '2026-01-01' }]; // 2 years
                 // Required: Start + (2*2) years + 1 day = Start + 4 years + 1 day
 
                 app.startDate = '2020-01-01';
@@ -492,7 +518,7 @@ const tests = {
             // 27. Irregular Income - Eligibility (False)
             (() => {
                 const app = createTestApp();
-                app.paymentDates = ['2025-01-01', '2026-01-01']; // 2 years
+                app.payments = [{ date: '2025-01-01' }, { date: '2026-01-01' }]; // 2 years
                 // Required: Start + 4 years + 1 day
 
                 app.startDate = '2020-01-01';
@@ -508,7 +534,7 @@ const tests = {
             // 29. Irregular Income - Single Payment Default & Exact Date
             (() => {
                 const app = createTestApp();
-                app.paymentDates = []; // No installments -> 1 year
+                app.payments = []; // No installments -> 1 year
                 assert(app.paymentYears === 1, 'Irregular Income: Defaults to 1 payment year if no installments');
 
                 // Required: Start + (1*2) years + 1 day <= End
@@ -575,12 +601,92 @@ const tests = {
                 // Since this test modifies window.open, passed/failed logic in asserts needs to run safely.
             })();
 
+            // 31. Installment Options
+            (() => {
+                const app = createTestApp();
+                // Mock strategy with installment options
+                app.strategies = [
+                    {
+                        name: 'installments_test',
+                        label: 'Test',
+                        defaults: {
+                            installmentOptions: [1, 3, 5],
+                            endDate: '2025-01-01'
+                        }
+                    }
+                ];
+                app.mode = 'installments_test';
+
+                // Initialize checks
+                app.allowedInstallmentYears = [];
+                // Manually trigger applyStrategy equivalent logic or call it if possible. 
+                // Since test app mocks things, let's call applyStrategy directly if we haven't mocked it out.
+                // The real applyStrategy uses window.ereStrategies, so our mock above in app.strategies might not be enough 
+                // if applyStrategy refers to window.ereStrategies.
+                // In main.js: `const strategy = this.strategies.find...` -> uses this.strategies. Good.
+
+                app.applyStrategy();
+
+                assert(app.allowedInstallmentYears.length === 3, 'Installments: Options loaded');
+                assert(app.installmentYears === 1, 'Installments: Default is 1 year');
+                assert(app.payments.length === 1, 'Installments: Default generates 1 date');
+                assert(app.payments[0].date === '2025-01-01', 'Installments: Default date matches end date');
+                assert(app.payments[0].label === 'Pago año 1', 'Installments: Default label is correct');
+
+                // Change to 3 years
+                app.installmentYears = 3;
+                app.generatePayments(); // Watcher mock might not fire automatically in this test setup
+
+                assert(app.payments.length === 3, 'Installments: Generates 3 dates');
+                const year1 = new Date(app.payments[0].date).getFullYear();
+                const year3 = new Date(app.payments[2].date).getFullYear();
+                assert(year1 === 2025, 'Installments: First payment year correct');
+                assert(year3 === 2027, 'Installments: Last payment year correct');
+                assert(app.payments[2].label === 'Pago año 3', 'Installments: Last label is correct');
+
+            })();
+
             // Summary
             const summary = document.createElement('div');
             summary.className = 'summary';
             summary.textContent = `Total: ${passed + failed} | Pasados: ${passed} | Fallados: ${failed}`;
             summary.style.color = failed > 0 ? 'red' : 'green';
             resultsDiv.appendChild(summary);
+
+            // 32. Lost Irregular Income Rights Warning
+            (() => {
+                const app = createTestApp();
+
+                // Scenario:
+                // Start: 2020-01-01. End: 2023-01-01. 
+                // Seniority = 3 years.
+
+                app.startDate = '2020-01-01';
+                app.endDate = '2023-01-01';
+
+                // Case A: Single Payment (1 year)
+                // Threshold = 1 * 2 = 2 years.
+                // Seniority (3) > Threshold (2). Eligible.
+                app.payments = [{ label: 'P1', date: '2023-01-01' }];
+                assert(app.paymentYears === 1, 'Warning Test: 1 Payment Year');
+                assert(app.isIrregularIncome === true, 'Warning Test: Eligible with single payment');
+                assert(app.isIrregularIncomeSinglePayment === true, 'Warning Test: Single payment check is true');
+                assert(app.lostIrregularIncomeRights === false, 'Warning Test: No rights lost yet');
+
+                // Case B: 3 Installments (3 years)
+                // Threshold = 3 * 2 = 6 years.
+                // Seniority (3) < Threshold (6). Not Eligible.
+                app.payments = [
+                    { label: 'P1', date: '2023-01-01' },
+                    { label: 'P2', date: '2024-01-01' },
+                    { label: 'P3', date: '2025-01-01' }
+                ];
+                assert(app.paymentYears === 3, 'Warning Test: 3 Payment Years');
+                assert(app.isIrregularIncome === false, 'Warning Test: Not eligible with 3 years');
+                assert(app.isIrregularIncomeSinglePayment === true, 'Warning Test: Still eligible if it were single payment');
+                assert(app.lostIrregularIncomeRights === true, 'Warning Test: Rights lost detected');
+
+            })();
 
         } catch (error) {
             console.error('Critical error running tests:', error);

@@ -8,7 +8,9 @@ Una herramienta web sencilla y eficaz para calcular estimaciones de indemnizaci�
 
 - **Cálculo Basado en Meses**: Sistema de cálculo mensual más preciso que cuenta los meses completos desde la fecha de inicio hasta la fecha de fin.
 - **Cálculo de Indemnización**: Basado en salario bruto y días por año estipulados.
-- **Pagos Fraccionados**: Posibilidad de configurar fechas de pago para dividir el importe total en plazos.
+- **Pagos Fraccionados**: Posibilidad de configurar el número de cuotas (años).
+  - **Reparto Inteligente**: El primer año percibe la totalidad de la indemnización exenta de impuestos.
+  - El resto (sujeto a tributación) se divide equitativamente entre los años restantes.
 - **Topes Legales**: Soporte para limitar la indemnización a un máximo de mensualidades (ej. 12 meses).
 - **Primas por Antigüedad**: Configuración de tramos de antigüedad para añadir importes extra.
   - El cálculo respeta el límite de días (mensualidades × 30) si se excede.
@@ -34,6 +36,7 @@ Una herramienta web sencilla y eficaz para calcular estimaciones de indemnizaci�
 - **Renta Irregular**:
   - Detecta automáticamente si se tiene derecho a la reducción del 30% por renta irregular.
   - Compara la antigüedad con los años de cobro (debe superar el doble de años de cobro más un día).
+  - **Aviso de Pérdida de Derechos**: Advierte al usuario si, al seleccionar plazos fraccionados, pierde el derecho a dicha reducción que habría tenido con un pago único.
   - Muestra claramente si aplica o no la reducción.
 - **Privacidad Total**: Todo el cálculo se realiza en el navegador del cliente. Ningún dato es enviado a servidores externos.
 
@@ -135,10 +138,11 @@ calculadoraEre/
            endDate: '2024-12-31', // Opcional, actualizado
            maxCompensationMonths: 24, // Opcional
            benefits: 1200,        // Opcional
-           paymentDates: ['2025-06-01', '2026-06-01'], // Fechas para pagos fraccionados
-           extras: [              // Opcional, actualizado
-               { years: 10, amount: 5000 }
-           ]
+            paymentDates: [],      // Opcional (legacy)
+            installmentOptions: [1, 3, 5], // Opciones de cuotas (años) disponibles
+            extras: [              // Opcional, actualizado
+                { years: 10, amount: 5000 }
+            ]
        },
        isDaysEditable: false,
        isEndDateEditable: false,

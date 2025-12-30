@@ -21,7 +21,9 @@ function ereCalculator() {
         endDate: null,
         maxCompensationMonths: null,
         isMaxCompensationMonthsEditable: true,
-        paymentDates: [],
+        payments: [],
+        installmentYears: 1,
+        allowedInstallmentYears: [],
         strategies: window.ereStrategies || [],
 
         initApp() {
@@ -54,6 +56,7 @@ function ereCalculator() {
             });
             this.$watch('endDate', () => {
                 this.workedMonths = this.calculateMonthsFromDate(this.startDate, this.endDate);
+                this.generatePayments();
             });
 
             this.$watch('daysPerYear1', (newValue) => {
@@ -65,6 +68,14 @@ function ereCalculator() {
                 if (newValue !== null) {
                     this.daysPerMonth2 = newValue / 12;
                 }
+            });
+
+            this.$watch('installmentYears', () => {
+                this.generatePayments();
+            });
+            this.$watch('endDate', () => {
+                this.workedMonths = this.calculateMonthsFromDate(this.startDate, this.endDate);
+                this.generatePayments();
             });
         },
 
@@ -117,10 +128,42 @@ function ereCalculator() {
             this.isMaxCompensationMonthsEditable = strategy.hasOwnProperty('isMaxCompensationMonthsEditable') ? strategy.isMaxCompensationMonthsEditable : true;
 
             if (strategy.defaults && strategy.defaults.paymentDates) {
-                this.paymentDates = strategy.defaults.paymentDates;
+                this.payments = strategy.defaults.paymentDates.map((date, index) => ({
+                    label: `Pago ${index + 1}`,
+                    date: date
+                }));
             } else {
-                this.paymentDates = [];
+                this.payments = [];
             }
+
+            if (strategy.defaults && strategy.defaults.installmentOptions) {
+                this.allowedInstallmentYears = strategy.defaults.installmentOptions;
+                this.installmentYears = 1;
+                this.generatePayments();
+            } else {
+                this.allowedInstallmentYears = [];
+                this.installmentYears = 1;
+            }
+        },
+
+        generatePayments() {
+            if (!this.endDate || !this.installmentYears) {
+                this.payments = [];
+                return;
+            }
+
+            const newPayments = [];
+            const baseDate = new Date(this.endDate);
+
+            for (let i = 0; i < this.installmentYears; i++) {
+                const yearDate = new Date(baseDate);
+                yearDate.setFullYear(baseDate.getFullYear() + i);
+                newPayments.push({
+                    label: `Pago año ${i + 1}`,
+                    date: yearDate.toISOString().split('T')[0]
+                });
+            }
+            this.payments = newPayments;
         },
 
         calculateMonthsFromDate(startDate, endDate) {
@@ -399,18 +442,44 @@ function ereCalculator() {
         },
 
         get installmentPayments() {
-            if (!this.paymentDates || this.paymentDates.length === 0) return [];
+            if (!this.payments || this.payments.length === 0) return [];
+
+            if (this.payments.length === 1) {
+                return [{
+                    label: this.payments[0].label,
+                    date: this.payments[0].date,
+                    amount: this.totalIndemnity
+                }];
+            }
+
             const total = this.totalIndemnity;
-            const amountPerInstallment = total / this.paymentDates.length;
-            return this.paymentDates.map(date => ({
-                date: date,
-                amount: amountPerInstallment
-            }));
+            const exempt = this.taxExemptIndemnity;
+            const taxable = Math.max(0, total - exempt);
+
+            const numInstallments = this.payments.length;
+            // First year gets exempt part
+            // Remaining years (N-1) share the taxable part
+            const restYears = numInstallments - 1;
+            const amountPerRestYear = restYears > 0 ? taxable / restYears : 0;
+
+            return this.payments.map((p, index) => {
+                let amount = 0;
+                if (index === 0) {
+                    amount = exempt;
+                } else {
+                    amount = amountPerRestYear;
+                }
+                return {
+                    label: p.label,
+                    date: p.date,
+                    amount: amount
+                };
+            });
         },
 
         get paymentYears() {
-            if (!this.paymentDates || this.paymentDates.length === 0) return 1;
-            const years = new Set(this.paymentDates.map(date => new Date(date).getFullYear()));
+            if (!this.payments || this.payments.length === 0) return 1;
+            const years = new Set(this.payments.map(p => new Date(p.date).getFullYear()));
             return years.size;
         },
 
@@ -426,6 +495,24 @@ function ereCalculator() {
             targetDate.setDate(targetDate.getDate() + 1);
 
             return end >= targetDate;
+        },
+
+        get isIrregularIncomeSinglePayment() {
+            if (!this.startDate || !this.endDate) return false;
+
+            const start = new Date(this.startDate);
+            const end = new Date(this.endDate);
+            const yearsToAdd = 2;
+
+            const targetDate = new Date(start);
+            targetDate.setFullYear(targetDate.getFullYear() + yearsToAdd);
+            targetDate.setDate(targetDate.getDate() + 1);
+
+            return end >= targetDate;
+        },
+
+        get lostIrregularIncomeRights() {
+            return this.isIrregularIncomeSinglePayment && !this.isIrregularIncome;
         },
 
 

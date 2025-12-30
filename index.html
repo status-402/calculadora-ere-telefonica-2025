@@ -115,6 +115,15 @@
                 :readonly="!isMaxCompensationMonthsEditable" :class="{'readonly': !isMaxCompensationMonthsEditable}">
         </div>
 
+        <div class="input-group" x-show="allowedInstallmentYears.length > 0">
+            <label>Número de cuotas (años)</label>
+            <select x-model.number="installmentYears" class="mode-select">
+                <template x-for="year in allowedInstallmentYears" :key="year">
+                    <option :value="year" x-text="year === 1 ? '1 año (Pago único)' : year + ' años'"></option>
+                </template>
+            </select>
+        </div>
+
         <div class="input-group" x-show="isExtrasEditable || extras.length > 0">
             <div class="flex-between-center mb-6">
                 <label class="mb-0">Prima de voluntariedad <span class="optional-mark"
@@ -145,7 +154,6 @@
                     </div>
                 </template>
 
-                <!-- Read-only Mode -->
                 <template x-if="!isExtrasEditable">
                     <div>
                         <template x-for="extra in extras">
@@ -158,7 +166,6 @@
                 </template>
             </div>
         </div>
-
 
         <div x-show="grossSalary > 0 && workedMonths > 0 && (daysPerYear1 > 0 || daysPerYear2 > 0)" x-transition>
             <hr class="divider">
@@ -236,11 +243,15 @@
                     <div class="mt-5">
                         <template x-for="(payment, index) in installmentPayments" :key="index">
                             <div class="installment-row">
-                                <span x-text="new Date(payment.date).toLocaleDateString('es-ES')"></span>
+                                <span x-text="payment.label"></span>
                                 <strong x-text="formatCurrency(payment.amount)"></strong>
                             </div>
                         </template>
                     </div>
+                </div>
+
+                <div x-show="lostIrregularIncomeRights" class="warning-box mt-5">
+                    ⚠️ Al fraccionar el pago has perdido el derecho a la reducción por renta irregular (vs Pago único).
                 </div>
             </div>
         </div>
