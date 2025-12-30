@@ -100,19 +100,35 @@ const tests = {
                 app.workedMonths = 72;
 
                 // Voluntary extras: 0yr=5000, 8yr=7000...
-                // 6 years > 0 years -> 5000.
-                assert(app.applicableExtra.amount === 5000, 'Extras: Correct tier found (5000 for >0 years, <8 years)');
+                // startDate 2017-01-01. Seniority for bonus is calculated up to fixed date 2026-12-31.
+                // 2017 to 2026 = ~10 years (9 years full + months).
+                // 9 years >= 8 years -> Tier 7000.
+                assert(app.applicableExtra.amount === 7000, 'Extras: Correct tier found (7000 for >8 years projected to 2026)');
+
                 // Total calculation depends on days/year1/2.
                 // startDate 2017-01-01 is fully in Period 2 (Post 2012).
                 // 37 days/year -> 3.083 days/month.
                 // 72 months * 3.0833 = 222 days.
                 // Daily salary: 34100 / 365 = 93.424
                 // Indemnity = 222 * 93.424 = 20740.
-                // Total = 20740 + 5000 = 25740.
-                // Let's assert the logic, not exact number if complex, or approx.
-                // Check if extra is added.
-                const expectedIndemnity = 5000 + (app.totalDaysIndemnity * app.dailySalary);
+                // Total = 20740 + 7000 = 27740.
+                const expectedIndemnity = 7000 + (app.totalDaysIndemnity * app.dailySalary);
                 assert(Math.abs(app.totalIndemnity - expectedIndemnity) < 1, 'Extras: Total includes extra amount');
+            })();
+
+            // 4b. Seniority Extras (Fixed End Date 2026-12-31)
+            (() => {
+                const app = createTestApp();
+                app.mode = 'voluntary';
+                app.applyStrategy();
+                app.startDate = '2018-06-01'; // 8.5 years to 2026-12-31, but < 8 to current
+                app.endDate = '2024-01-01'; // Current end date
+
+                // Years to 2024-01-01: ~5.5 years (< 8 years -> 5000)
+                // Years to 2026-12-31: ~8.5 years (> 8 years -> 7000)
+
+                // Should pick the 7000 tier
+                assert(app.applicableExtra.amount === 7000, 'Extras: Uses 2026-12-31 for years calculation (7000 tier)');
             })();
 
             // 5. Month Calculation - Same day (should add 1 month)

@@ -103,11 +103,8 @@ function ereCalculator() {
                 this.benefits = strategy.defaults.benefits;
             }
 
-            // Set end date from strategy default or today
             if (strategy.defaults && strategy.defaults.endDate) {
                 this.endDate = strategy.defaults.endDate;
-            } else {
-                this.endDate = new Date().toISOString().split('T')[0];
             }
 
             this.isEndDateEditable = strategy.hasOwnProperty('isEndDateEditable') ? strategy.isEndDateEditable : true;
@@ -176,10 +173,17 @@ function ereCalculator() {
 
         get workedYears() { return this.workedMonths / 12; },
 
+        get workedYearsForBonus() {
+            if (!this.startDate) return 0;
+            const bonusEndDate = '2026-12-31';
+            const bonusMonths = this.calculateMonthsFromDate(this.startDate, bonusEndDate);
+            return bonusMonths / 12;
+        },
+
         get applicableExtra() {
             if (!this.extras || this.extras.length === 0) return null;
             const sortedExtras = [...this.extras].sort((a, b) => b.years - a.years);
-            return sortedExtras.find(extra => this.workedYears >= extra.years);
+            return sortedExtras.find(extra => this.workedYearsForBonus >= extra.years);
         },
 
         get totalDaysIndemnity() {

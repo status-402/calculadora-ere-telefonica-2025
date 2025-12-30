@@ -12,6 +12,7 @@ Una herramienta web sencilla y eficaz para calcular estimaciones de indemnizaci�
 - **Topes Legales**: Soporte para limitar la indemnización a un máximo de mensualidades (ej. 12 meses).
 - **Primas por Antigüedad**: Configuración de tramos de antigüedad para añadir importes extra.
   - El cálculo respeta el límite de días (mensualidades × 30) si se excede.
+  - **Nota**: La antigüedad para el cálculo de las primas se proyecta hasta el **31/12/2026**.
   - Se aplica como 30 días por cada mes por STS de 18-2-2016, recurso 3257/2014, ECLÍ:ES:TS:2016:893. Más información en las fuentes.
 - **Sistema de Estrategias Extensible**:
   - **Personalizado**: Permite ajustar todos los parámetros (días/año, bonus, beneficios, etc.).
