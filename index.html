@@ -127,13 +127,17 @@
         <div class="input-group" x-show="isExtrasEditable || extras.length > 0">
             <div class="flex-between-center mb-6">
                 <label class="mb-0">Prima de voluntariedad <span class="optional-mark"
-                        x-show="isExtrasEditable">(Opcional)</span></label>
+                        x-show="isExtrasEditable">(Opcional)</span>
+                    <div class="tooltip-container">
+                        <span class="tooltip-icon">?</span>
+                        <span class="tooltip-text">Se calcula con la fecha de 31/12/2026</span>
+                    </div>
+                </label>
                 <button x-show="isExtrasEditable" @click="addExtra()" class="btn-icon-add"
                     title="Añadir prima">+</button>
             </div>
 
             <div class="extras-list">
-                <!-- Editable Mode -->
                 <template x-if="isExtrasEditable">
                     <div>
                         <template x-for="(extra, index) in extras" :key="index">
@@ -266,7 +270,7 @@
         </div>
 
         <div class="footer-info">
-            Condiciones actualizadas a día 21/12/2025
+            Condiciones actualizadas a día 30/12/2025
         </div>
     </div>
 
