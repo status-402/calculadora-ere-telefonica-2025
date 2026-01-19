@@ -1,7 +1,7 @@
 registerStrategy({
     name: 'early_retiree',
     label: '🔗 Prejubilado TID, TSA TGS(Google Drive)',
-    url: 'https://docs.google.com/spreadsheets/d/1LSAUmLM_30h9UsWZ58JWmN3FEFNIJJB0/edit?usp=sharing&ouid=117349979550095125176&rtpof=true&sd=true',
+    url: 'https://docs.google.com/spreadsheets/d/1rnH4zGJwn_Zp2wDQ_9BqdlK69kUe2hyR/template/preview',
     defaults: {},
     isDaysEditable: false,
     showBonus: false,
